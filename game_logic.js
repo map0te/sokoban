@@ -1,19 +1,43 @@
 export class Game {
 	constructor() {
+		this.num_levels = 3;
 		this.game = [];
-		this.level = 0;
+		this.index = 0;
+		this.levels = [[[1, 1, 1, 1, 1, 1],
+      					[1, 0, 3, 0, 0, 1],
+      					[1, 0, 2, 0, 0, 1],
+      					[1, 1, 0, 1, 1, 1],
+      					[1, 0, 0, 0, 0, 1],
+      					[1, 0, 0, 0, 4, 1],
+      					[1, 1, 1, 1, 1, 1]],
+
+					   [[1, 1, 1, 1, 1, 1, 1],
+      					[1, 0, 0, 0, 0, 0, 1],
+      					[1, 0, 0, 0, 0, 0, 1],
+      					[1, 0, 0, 2, 1, 4, 1],
+      					[1, 3, 0, 0, 1, 0, 1],
+      					[1, 1, 1, 1, 1, 1, 1]]
+
+	 				   [[1, 1, 1, 1, 1, 1, 1, 1, 1],
+      					[1, 0, 0, 0, 1, 0, 0, 0, 1],
+      					[1, 0, 0, 0, 2, 0, 3, 4, 1],
+      					[1, 0, 0, 0, 1, 0, 0, 0, 1],
+      					[1, 0, 0, 0, 1, 0, 0, 0, 1],
+      					[1, 1, 1, 1, 1, 1, 1, 1, 1]]];
 	}
 
 	new_level() {
-		// pull random game out of game list
+		this.index = Math.floor(Math.random()*num_levels);
+		this.game = this.levels[this.index];
 	}
 
 	next_level() {
-		// set game to next level
+		this.index = (this.index+1)%this.num_levels;
+		this.game = this.levels[this.index];
 	}
 
 	reset_level() {
-		// reset level
+		this.game = this.levels[this.index];
 	}
 
 	move(move) {
