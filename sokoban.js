@@ -1,4 +1,5 @@
 import {defs, tiny} from './examples/common.js';
+import {Crate} from './objects/crate.js';
 
 const {
     Vector, Vector3, vec, vec3, vec4, color, hex_color, Matrix, Mat4, Light, Shape, Material, Scene,
@@ -22,47 +23,21 @@ class Cube extends Shape {
     }
 }
 
-class Cube_Outline extends Shape {
-    constructor() {
-        super("position", "color");
-        this.arrays.position = Vector3.cast(
-	    [-1,-1,-1], [-1,-1,1], [-1,-1,-1], [-1,1,-1], [-1,-1,-1], [1,-1,-1],
-	    [-1,1,1], [-1,1,-1], [-1,1,1], [-1,-1,1], [-1,1,1], [1,1,1],
-	    [1,-1,1], [1,-1,-1], [1,-1,1], [1,1,1], [1,-1,1], [-1,-1,1],
-	    [1,1,-1], [1,1,1], [1,1,-1], [1,-1,-1], [1,1,-1], [-1,1,-1]);
-	this.arrays.color = Array(24).fill(vec4(1,1,1,1));
-    }
-}
-
-class Cube_Single_Strip extends Shape {
-    constructor() {
-        super("position", "normal");
-    	this.arrays.position = Vector3.cast(
-	    [-1,-1,-1], [-1,-1,1], [-1,1,1], [-1,1,-1],
-	    [1,1,-1], [1,1,1], [1,-1,1], [1,-1,-1]);
-	this.arrays.normal = Vector3.cast(
-	    [-1,-1,-1], [-1,-1,1], [-1,1,1], [-1,1,-1],
-            [1,1,-1], [1,1,1], [1,-1,1], [1,-1,-1]);
-	this.indices.push(0,2,1,6,0,7,4,6,5,2,4,3,0,2);
-    }
-}
-
-
 class Base_Scene extends Scene {
-    /**
-     *  **Base_scene** is a Scene that can be added to any display canvas.
-     *  Setup the shapes, materials, camera, and lighting here.
-     */
     constructor() {
         // constructor(): Scenes begin by populating initial values like the Shapes and Materials they'll need.
         super();
-        this.hover = this.outline = false;
-        // At the beginning of our program, load one of each of these shape definitions onto the GPU.
+        
+		// At the beginning of our program, load one of each of these shape definitions onto the GPU.
         this.shapes = {
-            'cube': new Cube(),
-            'outline': new Cube_Outline(),
-	    'tricube': new Cube_Single_Strip(),
+            'crate': new Crate(), //TODO
+			'player': new Cube(), //TODO
+			'tree': new Cube(), //TODO 
+			'bush': new Cube(), //TODO
         };
+
+		// Sokoban Game
+		//this.game = new Game()
 
         // *** Materials
         this.materials = {
@@ -88,7 +63,7 @@ class Base_Scene extends Scene {
 
         // *** Lights: *** Values of vector or point lights.
         const light_position = vec4(0, 5, 5, 1);
-        program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 1000)];
+        program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 10000)];
     }
 }
 
@@ -100,61 +75,11 @@ export class Sokoban extends Base_Scene {
      * experimenting with matrix transformations.
      */
     constructor() {
-        super();
-	this.colors = this.generate_colors(8);
-    }
-
-    set_colors() {
-        this.colors = this.generate_colors(8);
-    }
-
-    make_control_panel() {
-        // Draw the scene's buttons, setup their actions and keyboard shortcuts, and monitor live measurements.
-        this.key_triggered_button("Change Colors", ["c"], this.set_colors);
-        // Add a button for controlling the scene.
-        this.key_triggered_button("Outline", ["o"], () => {
-            this.outline ^= 1;
-	});
-        this.key_triggered_button("Sit still", ["m"], () => {
-            this.hover ^= 1;
-	});
-    }
-
-    draw_box(context, program_state, model_transform, color, triangle) {
-	if (!triangle)
-	    this.shapes.cube.draw(context, program_state, model_transform, this.materials.plastic.override({color:color}));
-	else
-	    this.shapes.tricube.draw(context, program_state, model_transform, this.materials.plastic.override({color:color}), "TRIANGLE_STRIP");
-    }
-
-    draw_outline(context, program_state, model_transform) {
-        this.shapes.outline.draw(context, program_state, model_transform, this.white, "LINES");
-    }
-
-    generate_colors(n) {
-	let colors = [];
-	for (let i = 0; i < n; i++)
-	    colors.push(color(Math.random(), Math.random(), Math.random(), 1.0));
-	return colors
-    }
+    	super();
+	}
 
     display(context, program_state) {
         super.display(context, program_state);
-        const blue = hex_color("#1a9ffa");
-        let model_transform = Mat4.scale(1,1.5,1);
-	if (this.hover) {
-	    this.t = 0.05*Math.PI;
-	} else {
-	    this.t = .025*Math.PI*(1+Math.sin(program_state.animation_time/1000*Math.PI));
-	}
-	for (let i = 0; i < 8; i++) {
-    	    if (!this.outline)
-		this.draw_box(context, program_state, model_transform, this.colors[i], i%2);
-	    else 
-		this.draw_outline(context, program_state, model_transform);
-            model_transform = Mat4.translation(-1, 1.5, 0)
-		.times(Mat4.rotation(this.t, 0, 0, 1))
-		.times(Mat4.translation(1, 1.5, 0)).times(model_transform);
-	}
+		this.shapes.crate.model.draw(context, program_state, Mat4.identity(), this.shapes.crate.material);
     }
 }
