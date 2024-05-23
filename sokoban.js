@@ -41,6 +41,7 @@ class Base_Scene extends Scene {
 
         // Sokoban Game
         this.game = new Game()
+		this.game.reset_level();
 
         // *** Materials
         this.materials = {
@@ -64,6 +65,14 @@ class Base_Scene extends Scene {
         };
         // The white material and basic shader are used for drawing the outline.
         this.white = new Material(new defs.Basic_Shader());
+
+    }
+
+	make_control_panel() {
+    	this.key_triggered_button("Move Up", ["i"], () => this.game.move([0,-1]));
+		this.key_triggered_button("Move Left", ["j"], () => this.game.move([-1,0]));
+		this.key_triggered_button("Move Right", ["l"], () => this.game.move([1,0]));
+		this.key_triggered_button("Move Down", ["k"], () => this.game.move([0,1]));
     }
 
     display(context, program_state) {
@@ -105,12 +114,12 @@ export class Sokoban extends Base_Scene {
 		// ground
 		let xlen = this.game.levels[this.game.index].length;
 		let zlen = this.game.levels[this.game.index][0].length;
-		let gt = Mat4.translation(-3, -2, -3).times(Mat4.scale(xlen+2, .5, zlen+2).times(Mat4.translation(1, 1, 1)));
+		let gt = Mat4.translation(-3, -2.1, -3).times(Mat4.scale(xlen+2, .5, zlen+2).times(Mat4.translation(1, 1, 1)));
 		this.shapes.player.draw(context, program_state, gt, this.materials.tree.override({color: hex_color("#D2B48C")}));
 
-        for(var i = 0; i < xlen; i++) {
-            var game_level = this.game.levels[this.game.index][i];
-            for(var j = 0; j < zlen; j++) {
+        for(let i = 0; i < xlen; i++) {
+            let game_level = this.game.levels[this.game.index][i];
+            for(let j = 0; j < zlen; j++) {
                 if (game_level[j] == 1){
 
 					//if (j % 2 == 0){
@@ -127,9 +136,16 @@ export class Sokoban extends Base_Scene {
                     this.shapes.crate.draw(context, program_state, Mat4.identity().times(Mat4.translation(2*i, 0, 2*j)), this.materials.crate);
                 }
 
-                if (game_level[j] == 3){
+                if (game_level[j] == 3 || game_level[j] == 6){
                     this.shapes.player.draw(context, program_state, Mat4.identity().times(Mat4.translation(2*i, 0, 2*j)), this.materials.player);
                 }
+
+				if (game_level[j] == 4){
+					this.shapes.player.draw(context, program_state, Mat4.translation(2*i,-1.5,2*j).times(Mat4.scale(1,.5,1)), this.materials.crate.override({color: hex_color("FF817E")}));
+				}
+				if (game_level[j] == 5){
+					this.shapes.crate.draw(context, program_state, Mat4.identity().times(Mat4.translation(2*i, 0, 2*j)), this.materials.crate.override({color: hex_color("FF817E")}));
+				}
 
             }
 
