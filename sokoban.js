@@ -31,7 +31,7 @@ class Base_Scene extends Scene {
 
         // At the beginning of our program, load one of each of these shape definitions onto the GPU.
         this.shapes = {
-            //'crate': new Crate(), //TODO
+            'crate2': new Crate(), //TODO
             'player': new Cube(), //TODO
             'tree': new Cube(), //TODO
             'bush': new Cube(), //TODO
@@ -45,22 +45,22 @@ class Base_Scene extends Scene {
         // *** Materials
         this.materials = {
             plastic: new Material(new defs.Phong_Shader(),
-                {ambient: .4, diffusivity: .6, color: hex_color("#ffffff")}),
+                {ambient: .4, diffusivity: 1, color: hex_color("#ffffff")}),
 
             bush: new Material(new defs.Phong_Shader(),
-                {ambient: 1, color: hex_color("#FFFF00")}),
+                {ambient: .1, diffusivity: 1, color: hex_color("#FFFF00")}),
 
             player: new Material(new defs.Phong_Shader(),
-                {ambient: 1, color: hex_color("#800080")}),
+                {ambient: .1, diffusivity: 1, color: hex_color("#800080")}),
 
             tree: new Material(new defs.Phong_Shader(),
-                {ambient: 1, color: hex_color("#00FF00")}),
+                {ambient: .1, diffusivity: 1, color: hex_color("#00FF00")}),
 
             crate: new Material(new defs.Phong_Shader(),
-                {ambient: 1, color: hex_color("#F5F5DC")}),
+                {ambient: .1, diffusivity: 1, color: hex_color("#F5F5DC")}),
 
             skybox: new Material(new defs.Phong_Shader(),
-                {ambient: 1, color: hex_color("#87CEEB")}),
+                {ambient: 1, diffusivity: 0, color: hex_color("#87CEEB")}),
         };
         // The white material and basic shader are used for drawing the outline.
         this.white = new Material(new defs.Basic_Shader());
@@ -80,7 +80,7 @@ class Base_Scene extends Scene {
             Math.PI / 4, context.width / context.height, 1, 10000);
 
         // *** Lights: *** Values of vector or point lights.
-        const light_position = vec4(0, 5, 5, 1);
+        const light_position = vec4(20,20, 20, 1);
         program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 10000)];
     }
 }
@@ -98,29 +98,37 @@ export class Sokoban extends Base_Scene {
 
     display(context, program_state) {
         super.display(context, program_state);
-        this.shapes.skybox.draw(context, program_state, Mat4.identity().times(Mat4.scale(1000, 1000, 1000)), this.materials.skybox);
+        
+		// skybox
+		this.shapes.skybox.draw(context, program_state, Mat4.identity().times(Mat4.scale(1000, 1000, 1000)), this.materials.skybox);
 
-        for(var i = 0; i < this.game.levels[this.game.index].length; i++) {
+		// ground
+		let xlen = this.game.levels[this.game.index].length;
+		let zlen = this.game.levels[this.game.index][0].length;
+		let gt = Mat4.translation(-3, -2, -3).times(Mat4.scale(xlen+2, .5, zlen+2).times(Mat4.translation(1, 1, 1)));
+		this.shapes.player.draw(context, program_state, gt, this.materials.tree.override({color: hex_color("#D2B48C")}));
+
+        for(var i = 0; i < xlen; i++) {
             var game_level = this.game.levels[this.game.index][i];
-            for(var j = 0; j < game_level.length; j++) {
+            for(var j = 0; j < zlen; j++) {
                 if (game_level[j] == 1){
 
-                    if (j % 2 == 0){
-                        this.shapes.bush.draw(context, program_state, Mat4.identity().times(Mat4.translation(5*i, 0, 5*j)), this.materials.bush);
-                    }
+					//if (j % 2 == 0){
+                        this.shapes.tree.draw(context, program_state, Mat4.identity().times(Mat4.translation(2*i, -1, 2*j)), this.materials.tree);
+                    //}
 
-                    else{
-                        this.shapes.tree.draw(context, program_state, Mat4.identity().times(Mat4.translation(5*i, 0, 5*j)), this.materials.tree);
-                    }
+                    //else{
+                    //    this.shapes.crate.draw(context, program_state, Mat4.identity().times(Mat4.translation(5*i, 0, 5*j)), this.materials.crate);
+                    //}
 
                 }
 
                 if (game_level[j] == 2){
-                    this.shapes.crate.draw(context, program_state, Mat4.identity().times(Mat4.translation(5*i, 0, 5*j)), this.materials.crate);
+                    this.shapes.crate.draw(context, program_state, Mat4.identity().times(Mat4.translation(2*i, 0, 2*j)), this.materials.crate);
                 }
 
                 if (game_level[j] == 3){
-                    this.shapes.player.draw(context, program_state, Mat4.identity().times(Mat4.translation(5*i, 0, 5*j)), this.materials.player);
+                    this.shapes.player.draw(context, program_state, Mat4.identity().times(Mat4.translation(2*i, 0, 2*j)), this.materials.player);
                 }
 
             }
