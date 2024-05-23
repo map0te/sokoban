@@ -1,5 +1,6 @@
 import {defs, tiny} from './examples/common.js';
 import {Crate} from './objects/crate.js';
+import {Game} from "./game_logic.js";
 
 const {
     Vector, Vector3, vec, vec3, vec4, color, hex_color, Matrix, Mat4, Light, Shape, Material, Scene,
@@ -27,22 +28,35 @@ class Base_Scene extends Scene {
     constructor() {
         // constructor(): Scenes begin by populating initial values like the Shapes and Materials they'll need.
         super();
-        
-		// At the beginning of our program, load one of each of these shape definitions onto the GPU.
+
+        // At the beginning of our program, load one of each of these shape definitions onto the GPU.
         this.shapes = {
-            'crate': new Crate(), //TODO
-			'player': new Cube(), //TODO
-			'tree': new Cube(), //TODO 
-			'bush': new Cube(), //TODO
+            //'crate': new Crate(), //TODO
+            'player': new Cube(), //TODO
+            'tree': new Cube(), //TODO
+            'bush': new Cube(), //TODO
+            'crate': new Cube(), //TODO
         };
 
-		// Sokoban Game
-		//this.game = new Game()
+        // Sokoban Game
+        this.game = new Game()
 
         // *** Materials
         this.materials = {
             plastic: new Material(new defs.Phong_Shader(),
                 {ambient: .4, diffusivity: .6, color: hex_color("#ffffff")}),
+
+            bush: new Material(new defs.Phong_Shader(),
+                {ambient: 1, color: hex_color("#FFFF00")}),
+
+            player: new Material(new defs.Phong_Shader(),
+                {ambient: 1, color: hex_color("#800080")}),
+
+            tree: new Material(new defs.Phong_Shader(),
+                {ambient: 1, color: hex_color("#00FF00")}),
+
+            crate: new Material(new defs.Phong_Shader(),
+                {ambient: 1, color: hex_color("#F5F5DC")}),
         };
         // The white material and basic shader are used for drawing the outline.
         this.white = new Material(new defs.Basic_Shader());
@@ -75,11 +89,38 @@ export class Sokoban extends Base_Scene {
      * experimenting with matrix transformations.
      */
     constructor() {
-    	super();
-	}
+        super();
+    }
 
     display(context, program_state) {
         super.display(context, program_state);
-		this.shapes.crate.model.draw(context, program_state, Mat4.identity(), this.shapes.crate.material);
+        //this.shapes.bush.draw(context, program_state, Mat4.identity(), this.materials.bush);
+
+        for(var i = 0; i < this.game.levels[this.game.index].length; i++) {
+            var game_level = this.game.levels[this.game.index][i];
+            for(var j = 0; j < game_level.length; j++) {
+                if (game_level[j] == 1){
+
+                    if (j % 2 == 0){
+                        this.shapes.bush.draw(context, program_state, Mat4.identity().times(Mat4.translation(5*i, 0, 5*j)), this.materials.bush);
+                    }
+
+                    else{
+                        this.shapes.tree.draw(context, program_state, Mat4.identity().times(Mat4.translation(5*i, 0, 5*j)), this.materials.tree);
+                    }
+
+                }
+
+                if (game_level[j] == 2){
+                    this.shapes.crate.draw(context, program_state, Mat4.identity().times(Mat4.translation(5*i, 0, 5*j)), this.materials.crate);
+                }
+
+                if (game_level[j] == 3){
+                    this.shapes.player.draw(context, program_state, Mat4.identity().times(Mat4.translation(5*i, 0, 5*j)), this.materials.player);
+                }
+
+            }
+
+        }
     }
 }
