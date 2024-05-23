@@ -36,6 +36,7 @@ class Base_Scene extends Scene {
             'tree': new Cube(), //TODO
             'bush': new Cube(), //TODO
             'crate': new Cube(), //TODO
+            'skybox': new defs.Subdivision_Sphere(4),
         };
 
         // Sokoban Game
@@ -57,6 +58,9 @@ class Base_Scene extends Scene {
 
             crate: new Material(new defs.Phong_Shader(),
                 {ambient: 1, color: hex_color("#F5F5DC")}),
+
+            skybox: new Material(new defs.Phong_Shader(),
+                {ambient: 1, color: hex_color("#87CEEB")}),
         };
         // The white material and basic shader are used for drawing the outline.
         this.white = new Material(new defs.Basic_Shader());
@@ -73,7 +77,7 @@ class Base_Scene extends Scene {
             program_state.set_camera(Mat4.translation(5, -10, -30));
         }
         program_state.projection_transform = Mat4.perspective(
-            Math.PI / 4, context.width / context.height, 1, 100);
+            Math.PI / 4, context.width / context.height, 1, 10000);
 
         // *** Lights: *** Values of vector or point lights.
         const light_position = vec4(0, 5, 5, 1);
@@ -94,7 +98,7 @@ export class Sokoban extends Base_Scene {
 
     display(context, program_state) {
         super.display(context, program_state);
-        //this.shapes.bush.draw(context, program_state, Mat4.identity(), this.materials.bush);
+        this.shapes.skybox.draw(context, program_state, Mat4.identity().times(Mat4.scale(1000, 1000, 1000)), this.materials.skybox);
 
         for(var i = 0; i < this.game.levels[this.game.index].length; i++) {
             var game_level = this.game.levels[this.game.index][i];
