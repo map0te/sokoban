@@ -149,9 +149,26 @@ export class Game {
 		this.game = structuredClone(this.levels[this.index]);
 	}
 
+	prev_level() {
+		if (this.index == 0)
+			this.index = 16;
+		else
+			this.index = (this.index-1)%this.num_levels;
+		this.game = structuredClone(this.levels[this.index]);
+	}
+
 	reset_level() {
 		this.game = structuredClone(this.levels[this.index]);
 	}
+
+	is_solved() {
+		for(let i=0; i < this.game.length; i++)
+			for (let j=0; j < this.game[0].length; j++)
+				if (this.game[i][j] == 2)
+					return false;
+		return true;
+	}
+
 
 	get_keeper_pos() {
         for(let i=0; i < this.game.length; i++)
