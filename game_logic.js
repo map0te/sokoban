@@ -1,7 +1,7 @@
 export class Game {
 	constructor() {
-		this.num_levels = 3;
-		this.game = [];
+		this.num_levels = 4;
+		this.game = Array();
 		this.index = 0;
 		this.levels = [[[1, 1, 1, 1, 1, 1],
       					[1, 0, 3, 0, 0, 1],
@@ -16,28 +16,37 @@ export class Game {
       					[1, 0, 0, 0, 0, 0, 1],
       					[1, 0, 0, 2, 1, 4, 1],
       					[1, 3, 0, 0, 1, 0, 1],
-      					[1, 1, 1, 1, 1, 1, 1]]
+      					[1, 1, 1, 1, 1, 1, 1]],
 
 	 				   [[1, 1, 1, 1, 1, 1, 1, 1, 1],
       					[1, 0, 0, 0, 1, 0, 0, 0, 1],
       					[1, 0, 0, 0, 2, 0, 3, 4, 1],
       					[1, 0, 0, 0, 1, 0, 0, 0, 1],
       					[1, 0, 0, 0, 1, 0, 0, 0, 1],
-      					[1, 1, 1, 1, 1, 1, 1, 1, 1]]];
+      					[1, 1, 1, 1, 1, 1, 1, 1, 1]],
+					
+					   [[1, 1, 1, 1, 1, 0, 0, 0],
+                        [1, 0, 0, 0, 1, 0, 0, 0],
+                        [1, 2, 1, 0, 1, 1, 1, 1],
+                        [1, 4, 0, 0, 0, 0, 0, 1],
+                        [1, 0, 0, 5, 0, 5, 0, 1],
+                        [1, 0, 5, 0, 1, 0, 1, 1],
+                        [1, 1, 1, 0, 3, 0, 1, 0],
+                        [0, 0, 1, 1, 1, 1, 1, 0]]];
 	}
 
 	new_level() {
 		this.index = Math.floor(Math.random()*num_levels);
-		this.game = this.levels[this.index];
+		this.game = structured.clone(this.levels[this.index]);
 	}
 
 	next_level() {
 		this.index = (this.index+1)%this.num_levels;
-		this.game = this.levels[this.index];
+		this.game = structuredClone(this.levels[this.index]);
 	}
 
 	reset_level() {
-		this.game = this.levels[this.index];
+		this.game = structuredClone(this.levels[this.index]);
 	}
 
 	get_keeper_pos() {

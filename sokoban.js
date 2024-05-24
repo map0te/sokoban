@@ -73,7 +73,9 @@ class Base_Scene extends Scene {
 		this.key_triggered_button("Move Left", ["j"], () => this.game.move([-1,0]));
 		this.key_triggered_button("Move Right", ["l"], () => this.game.move([1,0]));
 		this.key_triggered_button("Move Down", ["k"], () => this.game.move([0,1]));
-    }
+   		this.key_triggered_button("Reset", ["q"], () => this.game.reset_level());
+		this.key_triggered_button("Next Level", ["n"], () => this.game.next_level());
+	}
 
     display(context, program_state) {
         // display():  Called once per frame of animation. Here, the base class's display only does
@@ -118,10 +120,10 @@ export class Sokoban extends Base_Scene {
 		this.shapes.player.draw(context, program_state, gt, this.materials.tree.override({color: hex_color("#D2B48C")}));
 
         for(let i = 0; i < xlen; i++) {
-            let game_level = this.game.levels[this.game.index][i];
+            let game_level = this.game.game[i];
             for(let j = 0; j < zlen; j++) {
                 if (game_level[j] == 1){
-
+					
 					//if (j % 2 == 0){
                         this.shapes.tree.draw(context, program_state, Mat4.identity().times(Mat4.translation(2*i, -1, 2*j)), this.materials.tree);
                     //}
