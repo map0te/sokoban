@@ -28,6 +28,7 @@ class Base_Scene extends Scene {
     constructor() {
         // constructor(): Scenes begin by populating initial values like the Shapes and Materials they'll need.
         super();
+        this.flat = false;
 
         // At the beginning of our program, load one of each of these shape definitions onto the GPU.
         this.shapes = {
@@ -70,13 +71,16 @@ class Base_Scene extends Scene {
 	}
 
 	make_control_panel() {
-    	this.key_triggered_button("Move Up", ["i"], () => this.game.move([0,-1]));
-		this.key_triggered_button("Move Left", ["j"], () => this.game.move([-1,0]));
-		this.key_triggered_button("Move Right", ["l"], () => this.game.move([1,0]));
-		this.key_triggered_button("Move Down", ["k"], () => this.game.move([0,1]));
-   		this.key_triggered_button("Reset", ["q"], () => this.game.reset_level());
+    	this.key_triggered_button("Move Up", ["w"], () => this.game.move([0,-1]));
+		this.key_triggered_button("Move Left", ["a"], () => this.game.move([-1,0]));
+		this.key_triggered_button("Move Right", ["d"], () => this.game.move([1,0]));
+		this.key_triggered_button("Move Down", ["s"], () => this.game.move([0,1]));
+   		this.key_triggered_button("Reset", ["r"], () => this.game.reset_level());
 		this.key_triggered_button("Next Level", ["n"], () => this.game.next_level());
 		this.key_triggered_button("Prev Level", ["Shift", "N"], () => this.game.prev_level());
+        this.key_triggered_button("Toggle View", ["c"], () => {
+            this.flat = !this.flat;
+        })
 	}
 
     display(context, program_state) {
@@ -88,6 +92,12 @@ class Base_Scene extends Scene {
             this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
             // Define the global camera and projection matrices, which are stored in program_state.
 				program_state.set_camera(this.initial_camera_location);
+        }
+
+        if (this.flat)
+        {
+            program_state.set_camera(Mat4.look_at(vec3(5, 40, 5), vec3(5, 0, 5), vec3(0, 0, -1)));
+            this.flat= false;
         }
 
         program_state.projection_transform = Mat4.perspective(
@@ -155,5 +165,10 @@ export class Sokoban extends Base_Scene {
             }
 
         }
+
+        //if (this.flat)
+        //{
+            //program_state.set_camera(Mat4.look_at(vec3(5, 40, 5), vec3(5, 0, 5), vec3(0, 0, -1)));
+        //}
     }
 }
