@@ -226,5 +226,6 @@ export class Game {
 		// solution
 		return 0
 	}
+
 }
 

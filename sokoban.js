@@ -1,5 +1,7 @@
 import {defs, tiny} from './examples/common.js';
 import {Crate} from './objects/crate.js';
+import {Tree_Trunks} from './objects/crate.js';
+import {Tree_Leaves} from './objects/crate.js';
 import {Game} from "./game_logic.js";
 
 const {
@@ -38,6 +40,8 @@ class Base_Scene extends Scene {
             'bush': new Cube(), //TODO
             'crate': new Cube(), //TODO
             'skybox': new defs.Subdivision_Sphere(4),
+            'Tree_Trunks': new Tree_Trunks(),
+            'Tree_Leaves': new Tree_Leaves(),
         };
 
         // Sokoban Game
@@ -121,6 +125,7 @@ export class Sokoban extends Base_Scene {
     }
 
     display(context, program_state) {
+        const t = program_state.animation_time / 1000
         super.display(context, program_state);
         
 		// skybox
@@ -138,7 +143,8 @@ export class Sokoban extends Base_Scene {
                 if (game_level[j] == 1){
 					
 					//if (j % 2 == 0){
-                        this.shapes.tree.draw(context, program_state, Mat4.identity().times(Mat4.translation(2*i, -1, 2*j)), this.materials.tree);
+                        this.shapes.Tree_Trunks.model.draw(context, program_state, Mat4.identity().times(Mat4.translation(2*i, 0, 2*j)), this.shapes.Tree_Trunks.material);
+                        this.shapes.Tree_Leaves.model.draw(context, program_state, Mat4.identity().times(Mat4.translation(2*i, 2, 2*j)), this.shapes.Tree_Leaves.material);
                     //}
 
                     //else{
@@ -163,6 +169,8 @@ export class Sokoban extends Base_Scene {
 				}
 
             }
+
+            //this.shapes.tree2.model.draw(context, program_state, Mat4.identity().times(Mat4.translation(0, 10, 0)), this.shapes.tree2.material);
 
         }
 
