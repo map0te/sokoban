@@ -31,6 +31,7 @@ class Base_Scene extends Scene {
         // constructor(): Scenes begin by populating initial values like the Shapes and Materials they'll need.
         super();
         this.flat = false;
+        this.pressed = false;
 
         // At the beginning of our program, load one of each of these shape definitions onto the GPU.
         this.shapes = {
@@ -83,6 +84,7 @@ class Base_Scene extends Scene {
 		this.key_triggered_button("Next Level", ["n"], () => this.game.next_level());
 		this.key_triggered_button("Prev Level", ["Shift", "N"], () => this.game.prev_level());
         this.key_triggered_button("Toggle View", ["c"], () => {
+            this.pressed = !this.pressed;
             this.flat = !this.flat;
         })
 	}
@@ -98,10 +100,18 @@ class Base_Scene extends Scene {
 				program_state.set_camera(this.initial_camera_location);
         }
 
-        if (this.flat)
+        if (this.pressed && this.flat)
         {
+            this.camera_save = program_state.camera_transform;
             program_state.set_camera(Mat4.look_at(vec3(5, 40, 5), vec3(5, 0, 5), vec3(0, 0, -1)));
-            this.flat= false;
+            this.pressed = false;
+        }
+
+        if (this.pressed && !this.flat)
+        {
+            program_state.set_camera(Mat4.inverse(this.camera_save));
+            //program_state.set_camera(this.initial_camera_location);
+            this.pressed = false;
         }
 
         program_state.projection_transform = Mat4.perspective(
