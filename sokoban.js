@@ -32,6 +32,7 @@ class Base_Scene extends Scene {
         super();
         this.flat = false;
         this.pressed = false;
+        this.solved = false;
 
         // At the beginning of our program, load one of each of these shape definitions onto the GPU.
         this.shapes = {
@@ -114,6 +115,18 @@ class Base_Scene extends Scene {
             this.pressed = false;
         }
 
+        if (this.solved)
+        {
+            this.solved = false;
+            var start_timer = new Date().getTime();
+            for (var i = 0; i < 1e7; i++) {
+                if ((new Date().getTime() - start_timer) > 500){
+                    break;
+                }
+            }
+            this.game.next_level();
+        }
+
         program_state.projection_transform = Mat4.perspective(
             Math.PI / 4, context.width / context.height, 1, 10000);
 
@@ -176,17 +189,12 @@ export class Sokoban extends Base_Scene {
 				}
 				if (game_level[j] == 5){
 					this.shapes.crate.draw(context, program_state, Mat4.identity().times(Mat4.translation(2*i, 0, 2*j)), this.materials.crate.override({color: hex_color("FF817E")}));
+                    if (this.game.is_solved()){
+                        this.solved = true;
+                    }
 				}
 
             }
-
-            //this.shapes.tree2.model.draw(context, program_state, Mat4.identity().times(Mat4.translation(0, 10, 0)), this.shapes.tree2.material);
-
         }
-
-        //if (this.flat)
-        //{
-            //program_state.set_camera(Mat4.look_at(vec3(5, 40, 5), vec3(5, 0, 5), vec3(0, 0, -1)));
-        //}
     }
 }
