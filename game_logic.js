@@ -179,7 +179,7 @@ export class Game {
 		return "fail";
     }
 	
-	move(move) {
+	move(move, attempt) {
 		// attempt to make given move
 		let kpos = this.get_keeper_pos();
 		let row = kpos[0];
@@ -191,18 +191,8 @@ export class Game {
 		let my = move[1];
 
 		if (this.game[row+mx][col+my] == 0 || this.game[row+mx][col+my] == 4) {
-			if (this.game[row+mx][col+my] == 0)
-				this.game[row+mx][col+my] = 3;
-			else
-				this.game[row+mx][col+my] = 6;
-			if (this.game[row][col] == 3)
-				this.game[row][col] = 0;
-			else
-				this.game[row][col] = 4;
-			return 1
-		} else if (this.game[row+mx][col+my] == 2 || this.game[row+mx][col+my] == 5) {
-			if (this.game[row+2*mx][col+2*my] == 0 || this.game[row+2*mx][col+2*my] == 4) {
-				if (this.game[row+mx][col+my] == 2)
+			if (!attempt) {
+				if (this.game[row+mx][col+my] == 0)
 					this.game[row+mx][col+my] = 3;
 				else
 					this.game[row+mx][col+my] = 6;
@@ -210,14 +200,27 @@ export class Game {
 					this.game[row][col] = 0;
 				else
 					this.game[row][col] = 4;
-				if (this.game[row+2*mx][col+2*my] == 0)
-					this.game[row+2*mx][col+2*my] = 2;
-				else
-					this.game[row+2*mx][col+2*my] = 5;
-				return 1
+			}
+			return 1
+		} else if (this.game[row+mx][col+my] == 2 || this.game[row+mx][col+my] == 5) {
+			if (this.game[row+2*mx][col+2*my] == 0 || this.game[row+2*mx][col+2*my] == 4) {
+				if (!attempt) {
+					if (this.game[row+mx][col+my] == 2)
+						this.game[row+mx][col+my] = 3;
+					else
+						this.game[row+mx][col+my] = 6;
+					if (this.game[row][col] == 3)
+						this.game[row][col] = 0;
+					else
+						this.game[row][col] = 4;
+					if (this.game[row+2*mx][col+2*my] == 0)
+						this.game[row+2*mx][col+2*my] = 2;
+					else
+						this.game[row+2*mx][col+2*my] = 5;
+				}	
+				return 2
 			}
 		}
-		// return 1 on success
 		return 0
 	}
 
