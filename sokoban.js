@@ -38,6 +38,8 @@ class Base_Scene extends Scene {
         this.rotation_angle_down = false;
         this.right_pressed = false;
         this.rotation_angle_right = false;
+        this.up_pressed = false;
+        this.rotation_angle_up = false;
         this.angle = 0;
 
         // At the beginning of our program, load one of each of these shape definitions onto the GPU.
@@ -176,9 +178,15 @@ export class Sokoban extends Base_Scene {
             let game_level = this.game.game[i];
             for(let j = 0; j < zlen; j++) {
 
-                if (this.down_pressed && game_level[j] == 3 && this.game.game[i][j+1] == 1)
+                if ((this.down_pressed && (game_level[j] == 3 || game_level[j] == 6) && this.game.game[i][j+1] == 1) || (this.down_pressed && (game_level[j] == 3 || game_level[j] == 6) && this.game.game[i][j+1] == 2 && (this.game.game[i][j+2] == 1 || this.game.game[i][j+2] == 2)))
                 {
                     this.down_pressed = false;
+                    this.direction_pressed = false;
+                }
+
+                if ((this.right_pressed && (game_level[j] == 3 || game_level[j] == 6) && this.game.game[i+1][j] == 1) || (this.right_pressed && (game_level[j] == 3 || game_level[j] == 6) && this.game.game[i+1][j] == 2 && (this.game.game[i+2][j] == 1 || this.game.game[i+2][j] == 2)))
+                {
+                    this.right_pressed = false;
                     this.direction_pressed = false;
                 }
 
@@ -199,15 +207,7 @@ export class Sokoban extends Base_Scene {
 
 
                     if(this.rotation_angle_down && this.game.game[i][j-1] == 3){
-                        if(this.game.game[i][j+1] == 1 || this.game.game[i][j+1] == 2)
-                        {
-                            this.down_pressed = false;
-                            this.direction_pressed = false;
-                        }
-
-                        else{
-                            this.shapes.crate.draw(context, program_state, Mat4.identity().times(Mat4.translation(2*i, 0, 2*j + 2*this.angle/(Math.PI/2))), this.materials.crate);
-                        }
+                        this.shapes.crate.draw(context, program_state, Mat4.identity().times(Mat4.translation(2*i, 0, 2*j + 2*this.angle/(Math.PI/2))), this.materials.crate);
                     }
 
                     else if(this.rotation_angle_right && this.game.game[i-1][j] == 3){
@@ -233,7 +233,7 @@ export class Sokoban extends Base_Scene {
 
                     if(this.rotation_angle_down){
                         this.shapes.player.draw(context, program_state, Mat4.identity().times(Mat4.translation(2*i, 0, 2*j + 2*this.angle/(Math.PI/2))).times(Mat4.rotation(this.angle, 1, 0, 0)), this.materials.player);
-                        this.angle = this.angle + 4*dt;
+                        this.angle = this.angle + 8*dt;
 
                         if (this.angle > Math.PI/2)
                         {
@@ -251,7 +251,7 @@ export class Sokoban extends Base_Scene {
 
                     if(this.rotation_angle_right){
                         this.shapes.player.draw(context, program_state, Mat4.identity().times(Mat4.translation(2*i + 2*this.angle/(Math.PI/2), 0, 2*j)).times(Mat4.rotation(this.angle, 0, 0, -1)), this.materials.player);
-                        this.angle = this.angle + 4*dt;
+                        this.angle = this.angle + 8*dt;
 
                         if (this.angle > Math.PI/2)
                         {
