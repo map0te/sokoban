@@ -7,7 +7,7 @@ const {vec3, vec4, vec, color, Matrix, Mat4, Light, Shape, Material, Shader, Tex
 const {Cube, Axis_Arrows, Textured_Phong, Phong_Shader, Basic_Shader, Subdivision_Sphere} = defs
 
 // The size of the light texture buffer
-export const LIGHT_DEPTH_TEX_SIZE = 2048;
+export const LIGHT_DEPTH_TEX_SIZE = 2048*8;
 
 export class Color_Phong_Shader extends defs.Phong_Shader {
 	vertex_glsl_code() {
@@ -88,6 +88,7 @@ export class Color_Phong_Shader extends defs.Phong_Shader {
 	update_GPU(context, gpu_addresses, gpu_state, model_transform, material) {
 		// update_GPU(): Add a little more to the base class's version of this method.
 		super.update_GPU(context, gpu_addresses, gpu_state, model_transform, material);
+
 		// Updated for assignment 4
 		context.uniform1f(gpu_addresses.animation_time, gpu_state.animation_time / 1000);
 	}
