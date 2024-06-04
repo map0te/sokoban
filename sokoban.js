@@ -42,6 +42,9 @@ class Base_Scene extends Scene {
         this.rotation_angle_up = false;
         this.angle = 0;
 
+		this.move = [0,0];
+		this.moving = false;
+
         // At the beginning of our program, load one of each of these shape definitions onto the GPU.
         this.shapes = {
             'crate2': new Crate(), //TODO
@@ -85,16 +88,10 @@ class Base_Scene extends Scene {
 	}
 
 	make_control_panel() {
-    	this.key_triggered_button("Move Up", ["w"], () => this.game.move([0,-1]));
-		this.key_triggered_button("Move Left", ["a"], () => this.game.move([-1,0]));
-		this.key_triggered_button("Move Right", ["d"], () => {
-            this.right_pressed = true;
-            this.direction_pressed = true;
-        });
-		this.key_triggered_button("Move Down", ["s"], () => {
-            this.down_pressed = true;
-            this.direction_pressed = true;
-        });
+    	this.key_triggered_button("Move Up", ["w"], () => this.begin_move([0,-1]));
+		this.key_triggered_button("Move Left", ["a"], () => this.begin_move([-1,0]));
+		this.key_triggered_button("Move Right", ["d"], () => this.begin_move([1,0]));
+		this.key_triggered_button("Move Down", ["s"], () => this.begin_move([0,1]));
    		this.key_triggered_button("Reset", ["r"], () => this.game.reset_level());
 		this.key_triggered_button("Next Level", ["n"], () => this.game.next_level());
 		this.key_triggered_button("Prev Level", ["Shift", "N"], () => this.game.prev_level());
@@ -102,6 +99,22 @@ class Base_Scene extends Scene {
             this.pressed = !this.pressed;
             this.flat = !this.flat;
         })
+	}
+
+	begin_move(move) {
+		if (this.game.move(move, true) > 0) {
+			this.angle = 0;
+			this.move = move;
+			this.moving = true;
+		}
+	}
+
+	end_move(move) {
+		this.moving = false;
+		this.game.move(move, false);
+		// check if solved
+		if (this.game.is_solved())
+			this.solved = true;
 	}
 
     display(context, program_state) {
@@ -174,105 +187,50 @@ export class Sokoban extends Base_Scene {
 		let gt = Mat4.translation(-3, -2, -3).times(Mat4.scale(xlen+2, .5, zlen+2).times(Mat4.translation(1, 1, 1)));
 		this.shapes.player.draw(context, program_state, gt, this.materials.tree.override({color: hex_color("#D2B48C")}));
 
-        for(let i = 0; i < xlen; i++) {
-            let game_level = this.game.game[i];
-            for(let j = 0; j < zlen; j++) {
+		let player_pos = this.game.get_keeper_pos();
 
-                if ((this.down_pressed && (game_level[j] == 3 || game_level[j] == 6) && this.game.game[i][j+1] == 1) || (this.down_pressed && (game_level[j] == 3 || game_level[j] == 6) && this.game.game[i][j+1] == 2 && (this.game.game[i][j+2] == 1 || this.game.game[i][j+2] == 2)))
-                {
-                    this.down_pressed = false;
-                    this.direction_pressed = false;
-                }
-
-                if ((this.right_pressed && (game_level[j] == 3 || game_level[j] == 6) && this.game.game[i+1][j] == 1) || (this.right_pressed && (game_level[j] == 3 || game_level[j] == 6) && this.game.game[i+1][j] == 2 && (this.game.game[i+2][j] == 1 || this.game.game[i+2][j] == 2)))
-                {
-                    this.right_pressed = false;
-                    this.direction_pressed = false;
-                }
-
-                if (game_level[j] == 1){
-					
-					//if (j % 2 == 0){
-                        this.shapes.Tree_Trunks.model.draw(context, program_state, Mat4.identity().times(Mat4.translation(2*i, 0, 2*j)), this.shapes.Tree_Trunks.material);
-                        this.shapes.Tree_Leaves.model.draw(context, program_state, Mat4.identity().times(Mat4.translation(2*i, 2, 2*j)), this.shapes.Tree_Leaves.material);
-                    //}
-
-                    //else{
-                    //    this.shapes.crate.draw(context, program_state, Mat4.identity().times(Mat4.translation(5*i, 0, 5*j)), this.materials.crate);
-                    //}
-
-                }
-
-                if (game_level[j] == 2){
-
-
-                    if(this.rotation_angle_down && this.game.game[i][j-1] == 3){
-                        this.shapes.crate.draw(context, program_state, Mat4.identity().times(Mat4.translation(2*i, 0, 2*j + 2*this.angle/(Math.PI/2))), this.materials.crate);
-                    }
-
-                    else if(this.rotation_angle_right && this.game.game[i-1][j] == 3){
-                        this.shapes.crate.draw(context, program_state, Mat4.identity().times(Mat4.translation(2*i + 2*this.angle/(Math.PI/2), 0, 2*j)), this.materials.crate);
-                    }
-
-                    else{
-                        this.shapes.crate.draw(context, program_state, Mat4.identity().times(Mat4.translation(2*i, 0, 2*j)), this.materials.crate);
-                    }
-                }
-
-                if (game_level[j] == 3 || game_level[j] == 6){
-
-                    if(!this.direction_pressed){
-                        this.shapes.player.draw(context, program_state, Mat4.identity().times(Mat4.translation(2*i, 0, 2*j)), this.materials.player);
-                    }
-
-                    if(this.down_pressed){
-                        this.angle = 0;
-                        this.down_pressed = false;
-                        this.rotation_angle_down = true;
-                    }
-
-                    if(this.rotation_angle_down){
-                        this.shapes.player.draw(context, program_state, Mat4.identity().times(Mat4.translation(2*i, 0, 2*j + 2*this.angle/(Math.PI/2))).times(Mat4.rotation(this.angle, 1, 0, 0)), this.materials.player);
-                        this.angle = this.angle + 8*dt;
-
-                        if (this.angle > Math.PI/2)
-                        {
-                            this.rotation_angle_down = false;
-                            this.direction_pressed = false;
-                            this.game.move([0,1]);
-                        }
-                    }
-
-                    if(this.right_pressed){
-                        this.angle = 0;
-                        this.right_pressed = false;
-                        this.rotation_angle_right = true;
-                    }
-
-                    if(this.rotation_angle_right){
-                        this.shapes.player.draw(context, program_state, Mat4.identity().times(Mat4.translation(2*i + 2*this.angle/(Math.PI/2), 0, 2*j)).times(Mat4.rotation(this.angle, 0, 0, -1)), this.materials.player);
-                        this.angle = this.angle + 8*dt;
-
-                        if (this.angle > Math.PI/2)
-                        {
-                            this.rotation_angle_right = false;
-                            this.direction_pressed = false;
-                            this.game.move([1,0]);
-                        }
-                    }
-                }
-
-				if (game_level[j] == 4){
-					this.shapes.player.draw(context, program_state, Mat4.translation(2*i,-1.4,2*j).times(Mat4.scale(1,.5,1)), this.materials.crate.override({color: hex_color("FF817E")}));
+		for (let i=0; i < xlen; i++) {
+			let gl = this.game.game[i];
+			for (let j=0; j < zlen; j++) {
+				// wall
+				if (gl[j] == 1) {
+					this.shapes.Tree_Trunks.model.draw(context, program_state, Mat4.identity().times(Mat4.translation(2*i, 0, 2*j)), this.shapes.Tree_Trunks.material);
+                    this.shapes.Tree_Leaves.model.draw(context, program_state, Mat4.identity().times(Mat4.translation(2*i, 2, 2*j)), this.shapes.Tree_Leaves.material);
+				} 
+				// crate
+				else if (gl[j] == 2 | gl[j] == 5) {
+					let material = this.materials.crate;
+					if (gl[j] == 5) 
+						material = this.materials.crate.override({color: hex_color("#FF817E")});
+					if (this.moving && player_pos[0]+this.move[0] == i && player_pos[1]+this.move[1] == j) {
+						let tm = Mat4.translation(2*i + 2*this.move[0]*Math.sin(this.angle), 0, 2*j + 2*this.move[1]*Math.sin(this.angle));
+						this.shapes.crate.draw(context, program_state, tm, material);
+					} else {
+						let tm = Mat4.translation(2*i, 0, 2*j);
+						this.shapes.crate.draw(context, program_state, tm, material);
+					}
 				}
-				if (game_level[j] == 5){
-					this.shapes.crate.draw(context, program_state, Mat4.identity().times(Mat4.translation(2*i, 0, 2*j)), this.materials.crate.override({color: hex_color("FF817E")}));
-                    if (this.game.is_solved()){
-                        this.solved = true;
-                    }
+				// player
+				else if (gl[j] == 3 || gl[j] == 6) {
+					if (!this.moving) {
+						this.shapes.player.draw(context, program_state, Mat4.translation(2*i, 0, 2*j), this.materials.player);
+					} else {
+						let ax_tr = Mat4.translation(-this.move[0], 1, -this.move[1]);
+						let x_rot = Mat4.rotation(this.move[1]*this.angle, 1, 0, 0);
+						let y_rot = Mat4.rotation(-this.move[0]*this.angle, 0, 0, 1);
+						let pos_tr = Mat4.translation(2*i, 0, 2*j);
+						let tm = pos_tr.times(Mat4.inverse(ax_tr)).times(x_rot).times(y_rot).times(ax_tr);
+						this.shapes.player.draw(context, program_state, tm, this.materials.player);
+						if (this.angle > Math.PI/2)
+							this.end_move(this.move);
+						else
+							this.angle += 8*dt;
+					}
 				}
-
-            }
-        }
+				// goal
+				else if (gl[j] == 4) {
+                    this.shapes.player.draw(context, program_state, Mat4.translation(2*i,-1.4,2*j).times(Mat4.scale(1,.5,1)), this.materials.crate.override({color: hex_color("FF817E")}));                      }
+			}
+		}
     }
 }
