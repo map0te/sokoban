@@ -220,11 +220,11 @@ export class Sokoban extends Base_Scene {
 						if (this.angle > Math.PI/2)
 							this.end_move(this.move);
 						else
-							this.angle += 8*dt;
+							this.angle += 6*dt;
 					}
 				}
 				// goal
-				else if (gl[j] == 4) {
+				if (gl[j] == 4 || gl[j] == 6) {
 					this.shapes.player.draw(context, program_state, Mat4.translation(2*i,-1.4,2*j).times(Mat4.scale(1,.5,1)), this.materials.crate.override({color: hex_color("FF817E")}));                      }
 			}
 		}
