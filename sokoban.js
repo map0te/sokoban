@@ -31,17 +31,8 @@ class Base_Scene extends Scene {
 		// constructor(): Scenes begin by populating initial values like the Shapes and Materials they'll need.
 		super();
 		this.flat = false;
-		this.pressed = false;
 		this.solved = false;
-		this.direction_pressed = false;
-		this.down_pressed = false;
-		this.rotation_angle_down = false;
-		this.right_pressed = false;
-		this.rotation_angle_right = false;
-		this.up_pressed = false;
-		this.rotation_angle_up = false;
 		this.angle = 0;
-
 		this.move = [0,0];
 		this.moving = false;
 
