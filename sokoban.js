@@ -116,9 +116,6 @@ class Base_Scene extends Scene {
 		this.moving = false;
 		// actually make move
 		this.game.move(move, false);
-		// check if solved
-		if (this.game.is_solved())
-			this.solved = true;
 	}
 
     display(context, program_state) {
@@ -192,6 +189,10 @@ export class Sokoban extends Base_Scene {
 		this.shapes.player.draw(context, program_state, gt, this.materials.tree.override({color: hex_color("#D2B48C")}));
 
 		let player_pos = this.game.get_keeper_pos();
+		
+		// Check if solved before animating to have red block at end of solution
+		if (this.game.is_solved())
+            this.solved = true;
 
 		for (let i=0; i < xlen; i++) {
 			let gl = this.game.game[i];
