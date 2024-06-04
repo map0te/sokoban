@@ -2,6 +2,8 @@ import {defs, tiny} from './examples/common.js';
 import {Crate} from './objects/crate.js';
 import {Tree_Trunks} from './objects/crate.js';
 import {Tree_Leaves} from './objects/crate.js';
+import {Round_Tree_Trunks} from './objects/crate.js';
+import {Round_Tree_Leaves} from './objects/crate.js';
 import {Game} from "./game_logic.js";
 
 const {
@@ -35,6 +37,8 @@ class Base_Scene extends Scene {
 		this.angle = 0;
 		this.move = [0,0];
 		this.moving = false;
+		this.trees = Array.from({length: 100}, () => Math.floor(Math.random() * 2));
+		this.tree_counter = 0;
 
 		// At the beginning of our program, load one of each of these shape definitions onto the GPU.
 		this.shapes = {
@@ -46,6 +50,8 @@ class Base_Scene extends Scene {
 			'skybox': new defs.Subdivision_Sphere(4),
 			'Tree_Trunks': new Tree_Trunks(),
 			'Tree_Leaves': new Tree_Leaves(),
+			'Round_Tree_Trunks': new Round_Tree_Trunks(),
+			'Round_Tree_Leaves': new Round_Tree_Leaves(),
 		};
 
 		// Sokoban Game
@@ -143,6 +149,8 @@ class Base_Scene extends Scene {
 					break;
 				}
 			}
+			this.tree_counter = 0;
+			this.trees = Array.from({length: 100}, () => Math.floor(Math.random() * 2));
 			this.game.next_level();
 		}
 
@@ -190,8 +198,18 @@ export class Sokoban extends Base_Scene {
 			for (let j=0; j < zlen; j++) {
 				// wall
 				if (gl[j] == 1) {
-					this.shapes.Tree_Trunks.model.draw(context, program_state, Mat4.identity().times(Mat4.translation(2*i, 0, 2*j)), this.shapes.Tree_Trunks.material);
-					this.shapes.Tree_Leaves.model.draw(context, program_state, Mat4.identity().times(Mat4.translation(2*i, 2, 2*j)), this.shapes.Tree_Leaves.material);
+
+					if(this.trees[i*j] == 0){
+						this.shapes.Tree_Trunks.model.draw(context, program_state, Mat4.identity().times(Mat4.translation(2*i, 0, 2*j)).times(Mat4.scale(0.75, 1.25, 0.75)), this.shapes.Tree_Trunks.material);
+						this.shapes.Tree_Leaves.model.draw(context, program_state, Mat4.identity().times(Mat4.translation(2*i, 2, 2*j)).times(Mat4.scale(1, 1.25, 1)), this.shapes.Tree_Leaves.material);
+					}
+
+					if(this.trees[i*j] == 1){
+						this.shapes.Round_Tree_Trunks.model.draw(context, program_state, Mat4.identity().times(Mat4.translation(2*i, 1.3, 2*j)), this.shapes.Round_Tree_Trunks.material);
+						this.shapes.Round_Tree_Leaves.model.draw(context, program_state, Mat4.identity().times(Mat4.translation(2*i, 2.3, 2*j)).times(Mat4.scale(1.35, 1.35, 1.35)), this.shapes.Round_Tree_Leaves.material);
+					}
+
+					this.tree_counter++;
 				} 
 				// crate
 				else if (gl[j] == 2 | gl[j] == 5) {
@@ -227,6 +245,8 @@ export class Sokoban extends Base_Scene {
 				else if (gl[j] == 4) {
 					this.shapes.player.draw(context, program_state, Mat4.translation(2*i,-1.4,2*j).times(Mat4.scale(1,.5,1)), this.materials.crate.override({color: hex_color("FF817E")}));                      }
 			}
+
+			this.tree_counter = 0;
 		}
 	}
 }
