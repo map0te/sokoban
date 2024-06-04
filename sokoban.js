@@ -1,34 +1,40 @@
 import {defs, tiny} from './examples/common.js';
-import {Crate} from './objects/crate.js';
 import {Tree_Trunks} from './objects/crate.js';
 import {Tree_Leaves} from './objects/crate.js';
 import {Round_Tree_Trunks} from './objects/crate.js';
 import {Round_Tree_Leaves} from './objects/crate.js';
 import {Game} from "./game_logic.js";
 
+// shadows
+import {Color_Phong_Shader, Shadow_Textured_Phong_Shader,
+	Depth_Texture_Shader_2D, Buffered_Texture, LIGHT_DEPTH_TEX_SIZE} from './examples/shadow-shader.js'
+
 const {
-	Vector, Vector3, vec, vec3, vec4, color, hex_color, Matrix, Mat4, Light, Shape, Material, Scene,
-} = tiny;
+	Vector, Vector3, vec, vec3, vec4, color, hex_color, Matrix, Mat4, Light, Shape, Material, Scene, Shader, Texture} = tiny;
 
-class Cube extends Shape {
-	constructor() {
-		super("position", "normal",);
-		// Loop 3 times (for each axis), and inside loop twice (for opposing cube sides):
-		this.arrays.position = Vector3.cast(
-			[-1, -1, -1], [1, -1, -1], [-1, -1, 1], [1, -1, 1], [1, 1, -1], [-1, 1, -1], [1, 1, 1], [-1, 1, 1],
-			[-1, -1, -1], [-1, -1, 1], [-1, 1, -1], [-1, 1, 1], [1, -1, 1], [1, -1, -1], [1, 1, 1], [1, 1, -1],
-			[-1, -1, 1], [1, -1, 1], [-1, 1, 1], [1, 1, 1], [1, -1, -1], [-1, -1, -1], [1, 1, -1], [-1, 1, -1]);
-		this.arrays.normal = Vector3.cast(
-			[0, -1, 0], [0, -1, 0], [0, -1, 0], [0, -1, 0], [0, 1, 0], [0, 1, 0], [0, 1, 0], [0, 1, 0],
-			[-1, 0, 0], [-1, 0, 0], [-1, 0, 0], [-1, 0, 0], [1, 0, 0], [1, 0, 0], [1, 0, 0], [1, 0, 0],
-			[0, 0, 1], [0, 0, 1], [0, 0, 1], [0, 0, 1], [0, 0, -1], [0, 0, -1], [0, 0, -1], [0, 0, -1]);
-		// Arrange the vertices into a square shape in texture space too:
-		this.indices.push(0, 1, 2, 1, 3, 2, 4, 5, 6, 5, 7, 6, 8, 9, 10, 9, 11, 10, 12, 13,
-			14, 13, 15, 14, 16, 17, 18, 17, 19, 18, 20, 21, 22, 21, 23, 22);
+const {Cube, Axis_Arrows, Textured_Phong, Phong_Shader, Basic_Shader, Subdivision_Sphere} = defs;
+
+// 2D shape, to display the texture buffer
+const Square =
+	class Square extends tiny.Vertex_Buffer {
+		constructor() {
+			super("position", "normal", "texture_coord");
+			this.arrays.position = [
+				vec3(0, 0, 0), vec3(1, 0, 0), vec3(0, 1, 0),
+				vec3(1, 1, 0), vec3(1, 0, 0), vec3(0, 1, 0)
+			];
+			this.arrays.normal = [
+				vec3(0, 0, 1), vec3(0, 0, 1), vec3(0, 0, 1),
+				vec3(0, 0, 1), vec3(0, 0, 1), vec3(0, 0, 1),
+			];
+			this.arrays.texture_coord = [
+				vec(0, 0), vec(1, 0), vec(0, 1),
+				vec(1, 1), vec(1, 0), vec(0, 1)
+			]
+		}
 	}
-}
 
-class Base_Scene extends Scene {
+export class Sokoban extends Scene {
 	constructor() {
 		// constructor(): Scenes begin by populating initial values like the Shapes and Materials they'll need.
 		super();
@@ -37,12 +43,12 @@ class Base_Scene extends Scene {
 		this.angle = 0;
 		this.move = [0,0];
 		this.moving = false;
-		this.trees = Array.from({length: 100}, () => Math.floor(Math.random() * 3));
+		this.trees = Array.from({length: 100}, () => Math.floor(Math.random() * 6));
+		console.log(this.trees);
 		this.tree_counter = 0;
 
 		// At the beginning of our program, load one of each of these shape definitions onto the GPU.
 		this.shapes = {
-			'crate2': new Crate(), //TODO
 			'player': new Cube(), //TODO
 			'tree': new Cube(), //TODO
 			'bush': new defs.Subdivision_Sphere(2),
@@ -52,34 +58,63 @@ class Base_Scene extends Scene {
 			'Tree_Leaves': new Tree_Leaves(),
 			'Round_Tree_Trunks': new Round_Tree_Trunks(),
 			'Round_Tree_Leaves': new Round_Tree_Leaves(),
+			'square_2d': new Square(),
 		};
 
 		// Sokoban Game
 		this.game = new Game()
 		this.game.reset_level();
 
+		// For the first pass 
+		this.pure = new Material(new Color_Phong_Shader(), {});
+		// For light source
+		this.light_src = new Material(new defs.Phong_Shader(), {
+			color: color(1, 1, 1, 1), ambient: 1, diffusivity: 0, specularity: 0
+		});
+		// For depth texture display
+		this.depth_tex =  new Material(new Depth_Texture_Shader_2D(), {
+			color: color(0, 0, .0, 1),
+			ambient: 1, diffusivity: 0, specularity: 0, texture: null
+		});
+
+		// To make sure texture initialization only does once
+		this.init_ok = false;
+
 		// *** Materials
 		this.materials = {
-			plastic: new Material(new defs.Phong_Shader(),
-				{ambient: .4, diffusivity: 1, color: hex_color("#ffffff")}),
+			plastic: new Material(new Shadow_Textured_Phong_Shader(1),
+				{ambient: .4, diffusivity: 1, 
+					color: hex_color("#ffffff"),
+					color_texture: null,
+					light_depth_texture: null}),
 
-			bush: new Material(new defs.Phong_Shader(),
-				{ambient: .1, diffusivity: 1, specularity: 0.1, color: hex_color("#039660")}),
+			bush: new Material(new Shadow_Textured_Phong_Shader(1),
+				{ambient: .1, diffusivity: 1, specularity: 0.1, 
+					color: hex_color("#039660"),
+					color_texture: null,
+					light_depth_texture: null}),
 
-			player: new Material(new defs.Phong_Shader(),
-				{ambient: .1, diffusivity: 1, color: hex_color("#800080")}),
+			player: new Material(new Shadow_Textured_Phong_Shader(1),
+				{ambient: .1, diffusivity: 1, 
+					color: hex_color("#800080"),
+					color_texture: null,
+					light_depth_texture: null}),
 
-			tree: new Material(new defs.Phong_Shader(),
-				{ambient: .1, diffusivity: 1, color: hex_color("#00FF00")}),
+			tree: new Material(new Shadow_Textured_Phong_Shader(1),
+				{ambient: .1, diffusivity: 1, 
+					color: hex_color("#00FF00"),
+					color_texture: null,
+					light_depth_texture: null}),
 
-			crate: new Material(new defs.Phong_Shader(),
-				{ambient: .1, diffusivity: 1, color: hex_color("#F5F5DC")}),
+			crate: new Material(new Shadow_Textured_Phong_Shader(1),
+				{ambient: .1, diffusivity: 1, 
+					color: hex_color("#F5F5DC"),
+					color_texture: null,
+					light_depth_texture: null}),
 
 			skybox: new Material(new defs.Phong_Shader(),
 				{ambient: 1, diffusivity: 0, color: hex_color("#87CEEB")}),
 		};
-		// The white material and basic shader are used for drawing the outline.
-		this.white = new Material(new defs.Basic_Shader());
 
 		this.initial_camera_location = Mat4.look_at(vec3(5, 10, 30), vec3(5, 0, 0), vec3(0, 1, 0));
 	}
@@ -115,11 +150,180 @@ class Base_Scene extends Scene {
 		this.game.move(move, false);
 	}
 
-	display(context, program_state) {
-		// display():  Called once per frame of animation. Here, the base class's display only does
-		// some initial setup.
+	texture_buffer_init(gl) {
+		// Depth Texture
+		this.lightDepthTexture = gl.createTexture();
+		// Bind it to TinyGraphics
+		this.light_depth_texture = new Buffered_Texture(this.lightDepthTexture);
+		this.materials.plastic.light_depth_texture = this.light_depth_texture;
+		this.materials.player.light_depth_texture = this.light_depth_texture;
+		this.materials.bush.light_depth_texture = this.light_depth_texture;
+		this.materials.tree.light_depth_texture = this.light_depth_texture;
+		this.materials.crate.light_depth_texture = this.light_depth_texture;
+		this.shapes.Tree_Trunks.material.light_depth_texture = this.light_depth_texture;
+		this.shapes.Tree_Leaves.material.light_depth_texture = this.light_depth_texture;
+		this.shapes.Round_Tree_Trunks.material.light_depth_texture = this.light_depth_texture;
+		this.shapes.Round_Tree_Leaves.material.light_depth_texture = this.light_depth_texture;
 
-		// Setup -- This part sets up the scene's overall camera matrix, projection matrix, and lights:
+		this.lightDepthTextureSize = LIGHT_DEPTH_TEX_SIZE;
+		gl.bindTexture(gl.TEXTURE_2D, this.lightDepthTexture);
+		gl.texImage2D(
+			gl.TEXTURE_2D,      // target
+			0,                  // mip level
+			gl.DEPTH_COMPONENT, // internal format
+			this.lightDepthTextureSize,   // width
+			this.lightDepthTextureSize,   // height
+			0,                  // border
+			gl.DEPTH_COMPONENT, // format
+			gl.UNSIGNED_INT,    // type
+			null);              // data
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+		// Depth Texture Buffer
+		this.lightDepthFramebuffer = gl.createFramebuffer();
+		gl.bindFramebuffer(gl.FRAMEBUFFER, this.lightDepthFramebuffer);
+		gl.framebufferTexture2D(
+			gl.FRAMEBUFFER,       // target
+			gl.DEPTH_ATTACHMENT,  // attachment point
+			gl.TEXTURE_2D,        // texture target
+			this.lightDepthTexture,         // texture
+			0);                   // mip level
+		gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+		// create a color texture of the same size as the depth texture
+		// see article why this is needed_
+		this.unusedTexture = gl.createTexture();
+		gl.bindTexture(gl.TEXTURE_2D, this.unusedTexture);
+		gl.texImage2D(
+			gl.TEXTURE_2D,
+			0,
+			gl.RGBA,
+			this.lightDepthTextureSize,
+			this.lightDepthTextureSize,
+			0,
+			gl.RGBA,
+			gl.UNSIGNED_BYTE,
+			null,
+		);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+		// attach it to the framebuffer
+		gl.framebufferTexture2D(
+			gl.FRAMEBUFFER,        // target
+			gl.COLOR_ATTACHMENT0,  // attachment point
+			gl.TEXTURE_2D,         // texture target
+			this.unusedTexture,         // texture
+			0);                    // mip level
+		gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+	}
+
+	render_scene(context, program_state, shadow_pass, draw_light_source=false, draw_shadow=false) {
+		// shadow_pass: true if this is the second pass that draw the shadow.
+		// draw_light_source: true if we want to draw the light source.
+		// draw_shadow: true if we want to draw the shadow
+
+		let light_position = this.light_position;
+		let light_color = this.light_color;
+
+		program_state.draw_shadow = draw_shadow;
+
+		let t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
+
+		// skybox
+		this.shapes.skybox.draw(context, program_state, Mat4.identity().times(Mat4.scale(1000, 1000, 1000)), this.materials.skybox);
+
+		// ground
+		let xlen = this.game.levels[this.game.index].length;
+		let zlen = this.game.levels[this.game.index][0].length;
+		let gt = Mat4.translation(-3, -2, -3).times(Mat4.scale(xlen+2, .5, zlen+2).times(Mat4.translation(1, 1, 1)));
+		this.shapes.player.draw(context, program_state, gt, shadow_pass ? this.materials.tree.override({color: hex_color("#D2B48C")}) : this.pure);
+
+		let player_pos = this.game.get_keeper_pos();
+
+		// Check if solved before animating to have red block at end of solution
+		if (this.game.is_solved())
+			this.solved = true;
+
+		// Place objects in scene
+		for (let i=0; i < xlen; i++) {
+			let gl = this.game.game[i];
+			for (let j=0; j < zlen; j++) {
+				// wall
+				if (gl[j] == 1) {
+					if(this.trees[this.tree_counter] > 3) {
+                        this.shapes.Tree_Trunks.model.draw(context, program_state, Mat4.translation(2*i, 0, 2*j).times(Mat4.scale(0.75, 1.25, 0.75)), shadow_pass ? this.shapes.Tree_Trunks.material : this.pure);
+                        this.shapes.Tree_Leaves.model.draw(context, program_state, Mat4.translation(2*i, 2, 2*j).times(Mat4.scale(1, 1.25, 1)), shadow_pass ? this.shapes.Tree_Leaves.material : this.pure);
+                    }
+					
+					// temporarily remove big trees
+					else if(this.trees[this.tree_counter] > 6) {
+                        this.shapes.Round_Tree_Trunks.model.draw(context, program_state, Mat4.translation(2*i, 1.3, 2*j), shadow_pass ? this.shapes.Round_Tree_Trunks.material : this.pure);
+                        this.shapes.Round_Tree_Leaves.model.draw(context, program_state, Mat4.translation(2*i, 2.3, 2*j).times(Mat4.scale(1.35, 1.35, 1.35)), shadow_pass ? this.shapes.Round_Tree_Leaves.material : this.pure);
+                    }
+
+					else {
+                        this.shapes.bush.draw(context, program_state, Mat4.translation(2*i, -0.25, 2*j), shadow_pass ? this.materials.bush : this.pure);
+                    }
+
+                    this.tree_counter++;
+				}
+				// crate
+				else if (gl[j] == 2 | gl[j] == 5) {
+					let material = this.materials.crate;
+					if (gl[j] == 5)
+						material = this.materials.crate.override({color: hex_color("#FF817E")});
+					if (this.moving && player_pos[0]+this.move[0] == i && player_pos[1]+this.move[1] == j) {
+						let tm = Mat4.translation(2*i + 2*this.move[0]*Math.sin(this.angle), 0, 2*j + 2*this.move[1]*Math.sin(this.angle));
+						this.shapes.crate.draw(context, program_state, tm, shadow_pass ? material : this.pure);
+					} else {
+						let tm = Mat4.translation(2*i, 0, 2*j);
+						this.shapes.crate.draw(context, program_state, tm, shadow_pass ? material : this.pure);
+					}
+				}
+				// player
+				else if (gl[j] == 3 || gl[j] == 6) {
+					if (!this.moving) {
+						this.shapes.player.draw(context, program_state, Mat4.translation(2*i, 0, 2*j), shadow_pass ? this.materials.player : this.pure);
+					} else {
+						let ax_tr = Mat4.translation(-this.move[0], 1, -this.move[1]);
+						let x_rot = Mat4.rotation(this.move[1]*this.angle, 1, 0, 0);
+						let y_rot = Mat4.rotation(-this.move[0]*this.angle, 0, 0, 1);
+						let pos_tr = Mat4.translation(2*i, 0, 2*j);
+						let tm = pos_tr.times(Mat4.inverse(ax_tr)).times(x_rot).times(y_rot).times(ax_tr);
+						this.shapes.player.draw(context, program_state, tm, shadow_pass ? this.materials.player : this.pure);
+						if (this.angle > Math.PI/2)
+							this.end_move(this.move);
+						else
+							this.angle += 4*dt;
+					}
+				}
+				// goal
+				if (gl[j] == 4 || gl[j] == 6 || gl[j] == 5) {
+					this.shapes.player.draw(context, program_state, Mat4.translation(2*i,-1.4,2*j).times(Mat4.scale(1,.5,1)), shadow_pass ? this.materials.crate.override({color: hex_color("FF817E")}) : this.pure);
+				}
+			}
+			this.tree_counter = 0;
+		}
+	}
+
+	display(context, program_state) {
+		const gl = context.context;
+
+		if (!this.init_ok) {
+			const ext = gl.getExtension('WEBGL_depth_texture');
+			if (!ext) {
+				return alert('need WEBGL_depth_texture');  // eslint-disable-line
+			}
+			this.texture_buffer_init(gl);
+
+			this.init_ok = true;
+		}
+
 		if (!context.scratchpad.controls) {
 			this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
 			// Define the global camera and projection matrices, which are stored in program_state.
@@ -136,7 +340,6 @@ class Base_Scene extends Scene {
 		if (this.pressed && !this.flat)
 		{
 			program_state.set_camera(Mat4.inverse(this.camera_save));
-			//program_state.set_camera(this.initial_camera_location);
 			this.pressed = false;
 		}
 
@@ -150,107 +353,55 @@ class Base_Scene extends Scene {
 				}
 			}
 			this.tree_counter = 0;
-			this.trees = Array.from({length: 100}, () => Math.floor(Math.random() * 3));
+			this.trees = Array.from({length: 100}, () => Math.floor(Math.random() * 5));
 			this.game.next_level();
 		}
 
-		program_state.projection_transform = Mat4.perspective(
-			Math.PI / 4, context.width / context.height, 1, 10000);
-
 		// *** Lights: *** Values of vector or point lights.
-		let light_position = vec4(Math.floor((this.game.levels[this.game.index].length + 2)/2),100, Math.floor((this.game.levels[this.game.index][0].length + 2)/2), 1);
-		program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 10000)];
-	}
-}
+		//let light_position = vec4(Math.floor((this.game.levels[this.game.index].length + 2)/2),100, Math.floor((this.game.levels[this.game.index][0].length + 2)/2), 1);
+		//program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 10000)];
+		
+		this.light_position = vec4(0, 15, 10, 1);
+		this.light_color = color(1, 1, 1, 1);
+		program_state.lights = [new Light(this.light_position, this.light_color, 10000)];
 
-export class Sokoban extends Base_Scene {
-	/**
-	 * This Scene object can be added to any display canvas.
-	 * We isolate that code so it can be experimented with on its own.
-	 * This gives you a very small code sandbox for editing a simple scene, and for
-	 * experimenting with matrix transformations.
-	 */
-	constructor() {
-		super();
-	}
+		// This is a rough target of the light.
+		// Although the light is point light, we need a target to set the POV of the light
+		this.light_view_target = vec4(0, 0, 0, 1);
+		this.light_field_of_view = 130 * Math.PI / 180; // 130 degree
 
-	display(context, program_state) {
-		let t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
-		super.display(context, program_state);
+		// Step 1: set the perspective and camera to the POV of light
+		const light_view_mat = Mat4.look_at(
+			vec3(this.light_position[0], this.light_position[1], this.light_position[2]),
+			vec3(this.light_view_target[0], this.light_view_target[1], this.light_view_target[2]),
+			vec3(0, 1, 0), // assume the light to target will have a up dir of +y, maybe need to change according to your case
+		);
+		const light_proj_mat = Mat4.perspective(this.light_field_of_view, 1, 1, 10000);
+		// Bind the Depth Texture Buffer
+		gl.bindFramebuffer(gl.FRAMEBUFFER, this.lightDepthFramebuffer);
+		gl.viewport(0, 0, this.lightDepthTextureSize, this.lightDepthTextureSize);
+		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+		// Prepare uniforms
+		program_state.light_view_mat = light_view_mat;
+		program_state.light_proj_mat = light_proj_mat;
+		program_state.light_tex_mat = light_proj_mat;
+		program_state.view_mat = light_view_mat;
+		program_state.projection_transform = light_proj_mat;
+		this.render_scene(context, program_state, false,false, false);
 
-		// skybox
-		this.shapes.skybox.draw(context, program_state, Mat4.identity().times(Mat4.scale(1000, 1000, 1000)), this.materials.skybox);
+		// Step 2: unbind, draw to the canvas
+		gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+		gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+		program_state.view_mat = program_state.camera_inverse;
+		program_state.projection_transform = Mat4.perspective(Math.PI / 4, context.width / context.height, 1, 10000);
+		this.render_scene(context, program_state, true,true, true);
 
-		// ground
-		let xlen = this.game.levels[this.game.index].length;
-		let zlen = this.game.levels[this.game.index][0].length;
-		let gt = Mat4.translation(-3, -2, -3).times(Mat4.scale(xlen+2, .5, zlen+2).times(Mat4.translation(1, 1, 1)));
-		this.shapes.player.draw(context, program_state, gt, this.materials.tree.override({color: hex_color("#D2B48C")}));
-
-		let player_pos = this.game.get_keeper_pos();
-
-		// Check if solved before animating to have red block at end of solution
-		if (this.game.is_solved())
-			this.solved = true;
-
-		for (let i=0; i < xlen; i++) {
-			let gl = this.game.game[i];
-			for (let j=0; j < zlen; j++) {
-				// wall
-				if (gl[j] == 1) {
-
-					if(this.trees[this.tree_counter] == 0){
-						this.shapes.Tree_Trunks.model.draw(context, program_state, Mat4.identity().times(Mat4.translation(2*i, 0, 2*j)).times(Mat4.scale(0.75, 1.25, 0.75)), this.shapes.Tree_Trunks.material);
-						this.shapes.Tree_Leaves.model.draw(context, program_state, Mat4.identity().times(Mat4.translation(2*i, 2, 2*j)).times(Mat4.scale(1, 1.25, 1)), this.shapes.Tree_Leaves.material);
-					}
-
-					if(this.trees[this.tree_counter] == 1){
-						this.shapes.Round_Tree_Trunks.model.draw(context, program_state, Mat4.identity().times(Mat4.translation(2*i, 1.3, 2*j)), this.shapes.Round_Tree_Trunks.material);
-						this.shapes.Round_Tree_Leaves.model.draw(context, program_state, Mat4.identity().times(Mat4.translation(2*i, 2.3, 2*j)).times(Mat4.scale(1.35, 1.35, 1.35)), this.shapes.Round_Tree_Leaves.material);
-					}
-
-					if(this.trees[this.tree_counter] == 2) {
-						this.shapes.bush.draw(context, program_state, Mat4.identity().times(Mat4.translation(2*i, -0.25, 2*j)), this.materials.bush);
-					}
-
-					this.tree_counter++;
-				} 
-				// crate
-				else if (gl[j] == 2 | gl[j] == 5) {
-					let material = this.materials.crate;
-					if (gl[j] == 5) 
-						material = this.materials.crate.override({color: hex_color("#FF817E")});
-					if (this.moving && player_pos[0]+this.move[0] == i && player_pos[1]+this.move[1] == j) {
-						let tm = Mat4.translation(2*i + 2*this.move[0]*Math.sin(this.angle), 0, 2*j + 2*this.move[1]*Math.sin(this.angle));
-						this.shapes.crate.draw(context, program_state, tm, material);
-					} else {
-						let tm = Mat4.translation(2*i, 0, 2*j);
-						this.shapes.crate.draw(context, program_state, tm, material);
-					}
-				}
-				// player
-				else if (gl[j] == 3 || gl[j] == 6) {
-					if (!this.moving) {
-						this.shapes.player.draw(context, program_state, Mat4.translation(2*i, 0, 2*j), this.materials.player);
-					} else {
-						let ax_tr = Mat4.translation(-this.move[0], 1, -this.move[1]);
-						let x_rot = Mat4.rotation(this.move[1]*this.angle, 1, 0, 0);
-						let y_rot = Mat4.rotation(-this.move[0]*this.angle, 0, 0, 1);
-						let pos_tr = Mat4.translation(2*i, 0, 2*j);
-						let tm = pos_tr.times(Mat4.inverse(ax_tr)).times(x_rot).times(y_rot).times(ax_tr);
-						this.shapes.player.draw(context, program_state, tm, this.materials.player);
-						if (this.angle > Math.PI/2)
-							this.end_move(this.move);
-						else
-							this.angle += 8*dt;
-					}
-				}
-				// goal
-				else if (gl[j] == 4) {
-					this.shapes.player.draw(context, program_state, Mat4.translation(2*i,-1.4,2*j).times(Mat4.scale(1,.5,1)), this.materials.crate.override({color: hex_color("FF817E")}));                      }
-			}
-
-			this.tree_counter = 0;
-		}
+		// Step 3: display the textures
+		this.shapes.square_2d.draw(context, program_state,
+			Mat4.translation(-.99, .08, 0).times(
+				Mat4.scale(0.5, 0.5 * gl.canvas.width / gl.canvas.height, 1)
+			),
+			this.depth_tex.override({texture: this.lightDepthTexture})
+		);
 	}
 }
