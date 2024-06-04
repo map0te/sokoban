@@ -102,15 +102,19 @@ class Base_Scene extends Scene {
 	}
 
 	begin_move(move) {
-		if (this.game.move(move, true) > 0) {
-			this.angle = 0;
-			this.move = move;
-			this.moving = true;
+		// prohibit moving while other move animating
+		if (!this.moving)
+			// test if move is legal
+			if (this.game.move(move, true) > 0) {
+				this.angle = 0;
+				this.move = move;
+				this.moving = true;
 		}
 	}
 
 	end_move(move) {
 		this.moving = false;
+		// actually make move
 		this.game.move(move, false);
 		// check if solved
 		if (this.game.is_solved())
