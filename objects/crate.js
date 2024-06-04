@@ -28,7 +28,7 @@ export class Tree_Leaves {
 	constructor() {
 		this.model = new Shape_From_File('assets/pine_tree_leaves.obj');
 		this.material = new Material(new defs.Textured_Phong(1),
-			{ambient: .1, diffusivity: 1, specularity: 0.1, color: hex_color('#013220')});
+			{ambient: .1, diffusivity: 1, specularity: 0.1, color: hex_color('#026440')});
 	}
 }
 
@@ -44,7 +44,7 @@ export class Round_Tree_Leaves {
 	constructor() {
 		this.model = new Shape_From_File('assets/round_tree_leaves1.obj');
 		this.material = new Material(new defs.Textured_Phong(1),
-			{ambient: .1, diffusivity: 1, specularity: 0.1, color: hex_color('#013220')});
+			{ambient: .1, diffusivity: 1, specularity: 0.1, color: hex_color('#037d50')});
 	}
 }
 

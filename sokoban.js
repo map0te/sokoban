@@ -37,7 +37,7 @@ class Base_Scene extends Scene {
 		this.angle = 0;
 		this.move = [0,0];
 		this.moving = false;
-		this.trees = Array.from({length: 100}, () => Math.floor(Math.random() * 2));
+		this.trees = Array.from({length: 100}, () => Math.floor(Math.random() * 3));
 		this.tree_counter = 0;
 
 		// At the beginning of our program, load one of each of these shape definitions onto the GPU.
@@ -45,7 +45,7 @@ class Base_Scene extends Scene {
 			'crate2': new Crate(), //TODO
 			'player': new Cube(), //TODO
 			'tree': new Cube(), //TODO
-			'bush': new Cube(), //TODO
+			'bush': new defs.Subdivision_Sphere(2),
 			'crate': new Cube(), //TODO
 			'skybox': new defs.Subdivision_Sphere(4),
 			'Tree_Trunks': new Tree_Trunks(),
@@ -64,7 +64,7 @@ class Base_Scene extends Scene {
 				{ambient: .4, diffusivity: 1, color: hex_color("#ffffff")}),
 
 			bush: new Material(new defs.Phong_Shader(),
-				{ambient: .1, diffusivity: 1, color: hex_color("#FFFF00")}),
+				{ambient: .1, diffusivity: 1, specularity: 0.1, color: hex_color("#039660")}),
 
 			player: new Material(new defs.Phong_Shader(),
 				{ambient: .1, diffusivity: 1, color: hex_color("#800080")}),
@@ -150,7 +150,7 @@ class Base_Scene extends Scene {
 				}
 			}
 			this.tree_counter = 0;
-			this.trees = Array.from({length: 100}, () => Math.floor(Math.random() * 2));
+			this.trees = Array.from({length: 100}, () => Math.floor(Math.random() * 3));
 			this.game.next_level();
 		}
 
@@ -158,7 +158,7 @@ class Base_Scene extends Scene {
 			Math.PI / 4, context.width / context.height, 1, 10000);
 
 		// *** Lights: *** Values of vector or point lights.
-		const light_position = vec4(20,20, 20, 1);
+		let light_position = vec4(Math.floor((this.game.levels[this.game.index].length + 2)/2),100, Math.floor((this.game.levels[this.game.index][0].length + 2)/2), 1);
 		program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 10000)];
 	}
 }
@@ -199,14 +199,18 @@ export class Sokoban extends Base_Scene {
 				// wall
 				if (gl[j] == 1) {
 
-					if(this.trees[i*j] == 0){
+					if(this.trees[this.tree_counter] == 0){
 						this.shapes.Tree_Trunks.model.draw(context, program_state, Mat4.identity().times(Mat4.translation(2*i, 0, 2*j)).times(Mat4.scale(0.75, 1.25, 0.75)), this.shapes.Tree_Trunks.material);
 						this.shapes.Tree_Leaves.model.draw(context, program_state, Mat4.identity().times(Mat4.translation(2*i, 2, 2*j)).times(Mat4.scale(1, 1.25, 1)), this.shapes.Tree_Leaves.material);
 					}
 
-					if(this.trees[i*j] == 1){
+					if(this.trees[this.tree_counter] == 1){
 						this.shapes.Round_Tree_Trunks.model.draw(context, program_state, Mat4.identity().times(Mat4.translation(2*i, 1.3, 2*j)), this.shapes.Round_Tree_Trunks.material);
 						this.shapes.Round_Tree_Leaves.model.draw(context, program_state, Mat4.identity().times(Mat4.translation(2*i, 2.3, 2*j)).times(Mat4.scale(1.35, 1.35, 1.35)), this.shapes.Round_Tree_Leaves.material);
+					}
+
+					if(this.trees[this.tree_counter] == 2) {
+						this.shapes.bush.draw(context, program_state, Mat4.identity().times(Mat4.translation(2*i, -0.25, 2*j)), this.materials.bush);
 					}
 
 					this.tree_counter++;
