@@ -43,7 +43,7 @@ export class Sokoban extends Scene {
 		this.angle = 0;
 		this.move = [0,0];
 		this.moving = false;
-		this.trees = Array.from({length: 100}, () => Math.floor(Math.random() * 6));
+		this.trees = Array.from({length: 100}, () => Math.floor(Math.random() * 3));
 		console.log(this.trees);
 		this.tree_counter = 0;
 
@@ -95,7 +95,7 @@ export class Sokoban extends Scene {
 					light_depth_texture: null}),
 
 			player: new Material(new Shadow_Textured_Phong_Shader(1),
-				{ambient: .1, diffusivity: 1, 
+				{ambient: .1, diffusivity: 1,
 					color: hex_color("#800080"),
 					color_texture: null,
 					light_depth_texture: null}),
@@ -240,8 +240,8 @@ export class Sokoban extends Scene {
 		// ground
 		let xlen = this.game.levels[this.game.index].length;
 		let zlen = this.game.levels[this.game.index][0].length;
-		let gt = Mat4.translation(-3, -2, -3).times(Mat4.scale(xlen+2, .5, zlen+2).times(Mat4.translation(1, 1, 1)));
-		this.shapes.player.draw(context, program_state, gt, shadow_pass ? this.materials.tree.override({color: hex_color("#D2B48C")}) : this.pure);
+		//let gt = Mat4.translation(-3, -2, -3).times(Mat4.scale(xlen+2, .5, zlen+2).times(Mat4.translation(1, 1, 1)));
+		//this.shapes.player.draw(context, program_state, gt, shadow_pass ? this.materials.tree.override({color: hex_color("#D2B48C")}) : this.pure);
 
 		let player_pos = this.game.get_keeper_pos();
 
@@ -249,19 +249,35 @@ export class Sokoban extends Scene {
 		if (this.game.is_solved())
 			this.solved = true;
 
+		for (let i = 0; i < xlen+2; i++) {
+			for (let j = 0; j < zlen+2; j++) {
+				if (i == 0 || i == xlen + 1 || j == 0 || j == zlen + 1) {
+					this.shapes.player.draw(context, program_state, Mat4.identity().times(Mat4.translation(2*i-2, -1.5, 2*j-2)).times(Mat4.scale(1, .5, 1)), this.materials.tree.override({color: hex_color("#41980a")}));
+				}
+			}
+		}
+
+
 		// Place objects in scene
 		for (let i=0; i < xlen; i++) {
 			let gl = this.game.game[i];
 			for (let j=0; j < zlen; j++) {
+
+				if (gl[j] != 1) {
+					this.shapes.player.draw(context, program_state, Mat4.identity().times(Mat4.translation(2 * i, -1.5, 2 * j)).times(Mat4.scale(1, .5, 1)), this.materials.tree.override({color: hex_color("#D2B48C")}));
+				} else {
+					this.shapes.player.draw(context, program_state, Mat4.identity().times(Mat4.translation(2 * i, -1.5, 2 * j)).times(Mat4.scale(1, .5, 1)), this.materials.tree.override({color: hex_color("#41980a")}));
+				}
+
 				// wall
 				if (gl[j] == 1) {
-					if(this.trees[this.tree_counter] > 3) {
+					if(this.trees[this.tree_counter] ==  0) {
                         this.shapes.Tree_Trunks.model.draw(context, program_state, Mat4.translation(2*i, 0, 2*j).times(Mat4.scale(0.75, 1.25, 0.75)), shadow_pass ? this.shapes.Tree_Trunks.material : this.pure);
                         this.shapes.Tree_Leaves.model.draw(context, program_state, Mat4.translation(2*i, 2, 2*j).times(Mat4.scale(1, 1.25, 1)), shadow_pass ? this.shapes.Tree_Leaves.material : this.pure);
                     }
 					
 					// temporarily remove big trees
-					else if(this.trees[this.tree_counter] > 6) {
+					else if(this.trees[this.tree_counter] == 1) {
                         this.shapes.Round_Tree_Trunks.model.draw(context, program_state, Mat4.translation(2*i, 1.3, 2*j), shadow_pass ? this.shapes.Round_Tree_Trunks.material : this.pure);
                         this.shapes.Round_Tree_Leaves.model.draw(context, program_state, Mat4.translation(2*i, 2.3, 2*j).times(Mat4.scale(1.35, 1.35, 1.35)), shadow_pass ? this.shapes.Round_Tree_Leaves.material : this.pure);
                     }
