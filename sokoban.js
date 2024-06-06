@@ -4,6 +4,8 @@ import {Tree_Leaves} from './objects/crate.js';
 import {Round_Tree_Trunks} from './objects/crate.js';
 import {Round_Tree_Leaves} from './objects/crate.js';
 import {Flower_Stem} from './objects/crate.js';
+import {Flower_Core} from './objects/crate.js';
+import {Flower_Petal} from './objects/crate.js';
 import {Game} from "./game_logic.js";
 
 // shadows
@@ -47,6 +49,9 @@ export class Sokoban extends Scene {
 		this.trees = Array.from({length: 100}, () => Math.floor(Math.random() * 3));
 		console.log(this.trees);
 		this.tree_counter = 0;
+		this.movement_enabled = true;
+		//this.solution = [];
+		this.test = [[1,0], [1,0], [1,0], [0,-1], [1,0], [0,1], [0,1]];
 
 		// At the beginning of our program, load one of each of these shape definitions onto the GPU.
 		this.shapes = {
@@ -60,6 +65,8 @@ export class Sokoban extends Scene {
 			'Round_Tree_Trunks': new Round_Tree_Trunks(),
 			'Round_Tree_Leaves': new Round_Tree_Leaves(),
 			'Flower_Stem': new Flower_Stem(),
+			'Flower_Core': new Flower_Core(),
+			'Flower_Petal': new Flower_Petal(),
 			'square_2d': new Square(),
 		};
 
@@ -128,10 +135,28 @@ export class Sokoban extends Scene {
 	}
 
 	make_control_panel() {
-		this.key_triggered_button("Move Up", ["w"], () => this.begin_move([0,-1]));
-		this.key_triggered_button("Move Left", ["a"], () => this.begin_move([-1,0]));
-		this.key_triggered_button("Move Right", ["d"], () => this.begin_move([1,0]));
-		this.key_triggered_button("Move Down", ["s"], () => this.begin_move([0,1]));
+		this.key_triggered_button("Move Up", ["w"], () => {
+			if (this.movement_enabled){
+				this.begin_move([0,-1]);
+			}
+		});
+		this.key_triggered_button("Move Left", ["a"], () => {
+			if (this.movement_enabled){
+				this.begin_move([-1,0]);
+			}
+		});
+		this.key_triggered_button("Move Right", ["d"], () => {
+			if (this.movement_enabled)
+			{
+				this.begin_move([1,0]);
+			}
+		});
+		this.key_triggered_button("Move Down", ["s"], () => {
+			if (this.movement_enabled)
+			{
+				this.begin_move([0,1]);
+			}
+		});
 		this.key_triggered_button("Reset", ["r"], () => this.game.reset_level());
 		this.key_triggered_button("Next Level", ["n"], () => this.game.next_level());
 		this.key_triggered_button("Prev Level", ["Shift", "N"], () => this.game.prev_level());
@@ -139,6 +164,10 @@ export class Sokoban extends Scene {
 			this.pressed = !this.pressed;
 			this.flat = !this.flat;
 		})
+		this.key_triggered_button("AI Solve", ["p"], () => {
+			this.movement_enabled = false;
+			this.solution = [[1,0], [1,0], [1,0], [0,-1], [1,0], [0,1], [0,1]];
+		});
 	}
 
 	begin_move(move) {
@@ -158,6 +187,18 @@ export class Sokoban extends Scene {
 		this.game.move(move, false);
 	}
 
+	ai_mover(){
+		if (this.solution.length == 0)
+		{
+			this.movement_enabled = true;
+		}
+		else{
+			this.begin_move(this.solution[0]);
+			this.solution.shift();
+		}
+	}
+
+
 	texture_buffer_init(gl) {
 		// Depth Texture
 		this.lightDepthTexture = gl.createTexture();
@@ -173,6 +214,8 @@ export class Sokoban extends Scene {
 		this.shapes.Round_Tree_Trunks.material.light_depth_texture = this.light_depth_texture;
 		this.shapes.Round_Tree_Leaves.material.light_depth_texture = this.light_depth_texture;
 		this.shapes.Flower_Stem.material.light_depth_texture = this.light_depth_texture;
+		this.shapes.Flower_Core.material.light_depth_texture = this.light_depth_texture;
+		this.shapes.Flower_Petal.material.light_depth_texture = this.light_depth_texture;
 		this.materials.trail.light_depth_texture = this.light_depth_texture;
 
 
@@ -245,6 +288,11 @@ export class Sokoban extends Scene {
 
 		let t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
 
+		if(!this.movement_enabled && !this.moving)
+		{
+			this.ai_mover();
+		}
+
 		// skybox
 		this.shapes.skybox.draw(context, program_state, Mat4.identity().times(Mat4.scale(1000, 1000, 1000)), this.materials.skybox);
 
@@ -268,7 +316,9 @@ export class Sokoban extends Scene {
 			}
 		}
 
-		//this.shapes.Flower_Stem.model.draw(context, program_state, Mat4.translation(0, 10, 0).times(Mat4.scale(0.25, 0.25, 0.25)), shadow_pass ? this.shapes.Flower_Stem.material : this.pure);
+		//this.shapes.Flower_Stem.model.draw(context, program_state, Mat4.translation(0, 5, 0).times(Mat4.scale(0.25, 0.25, 0.25)), shadow_pass ? this.shapes.Flower_Stem.material : this.pure);
+		//this.shapes.Flower_Core.model.draw(context, program_state, Mat4.translation(0, 7, 0).times(Mat4.scale(0.1, 0.1, -0.1)), shadow_pass ? this.shapes.Flower_Core.material : this.pure);
+		//this.shapes.Flower_Petal.model.draw(context, program_state, Mat4.translation(0, 5.35, 0).times(Mat4.scale(0.15, 0.15, 0.15)), shadow_pass ? this.shapes.Flower_Petal.material : this.pure);
 
 		// Place objects in scene
 		for (let i=0; i < xlen; i++) {
@@ -325,7 +375,7 @@ export class Sokoban extends Scene {
 						let tm = pos_tr.times(Mat4.inverse(ax_tr)).times(x_rot).times(y_rot).times(ax_tr);
 						this.shapes.player.draw(context, program_state, tm, shadow_pass ? this.materials.player : this.pure);
 						if (this.angle > Math.PI/2)
-							this.end_move(this.move);
+							this.end_move(this.move)
 						else
 							this.angle += 4*dt;
 					}
@@ -360,7 +410,8 @@ export class Sokoban extends Scene {
 
 		if (this.pressed && this.flat)
 		{
-			this.camera_save = program_state.camera_transform;
+			//this.camera_save = program_state.camera_transform;
+			this.camera_save = this.matrix;
 			program_state.set_camera(Mat4.look_at(vec3(5, 40, 5), vec3(5, 0, 5), vec3(0, 0, -1)));
 			this.pressed = false;
 		}
