@@ -60,6 +60,7 @@ export class Sokoban extends Scene {
 			'bush': new defs.Subdivision_Sphere(2),
 			'crate': new (defs.Subdivision_Sphere.prototype.make_flat_shaded_version())(2), //TODO
 			'skybox': new defs.Subdivision_Sphere(4),
+			'correction': new defs.Subdivision_Sphere(4),
 			'Tree_Trunks': new Tree_Trunks(),
 			'Tree_Leaves': new Tree_Leaves(),
 			'Round_Tree_Trunks': new Round_Tree_Trunks(),
@@ -124,6 +125,9 @@ export class Sokoban extends Scene {
 			skybox: new Material(new defs.Phong_Shader(),
 				{ambient: 1, diffusivity: 0, color: hex_color("#87CEEB")}),
 
+			correction: new Material(new defs.Phong_Shader(),
+				{ambient: .1, diffusivity: 1, specularity: 0.1, color: hex_color("#964B00")}),
+
 			trail: new Material(new Shadow_Textured_Phong_Shader(1),
 				{ambient: .1, diffusivity: 1,
 					color: hex_color("#800080"),
@@ -157,7 +161,11 @@ export class Sokoban extends Scene {
 				this.begin_move([0,1]);
 			}
 		});
-		this.key_triggered_button("Reset", ["r"], () => this.game.reset_level());
+		this.key_triggered_button("Reset", ["r"], () => {
+			this.moving = false;
+			this.movement_enabled = true;
+			this.game.reset_level();
+		});
 		this.key_triggered_button("Next Level", ["n"], () => this.game.next_level());
 		this.key_triggered_button("Prev Level", ["Shift", "N"], () => this.game.prev_level());
 		this.key_triggered_button("Toggle View", ["c"], () => {
@@ -317,8 +325,10 @@ export class Sokoban extends Scene {
 		}
 
 		//this.shapes.Flower_Stem.model.draw(context, program_state, Mat4.translation(0, 5, 0).times(Mat4.scale(0.25, 0.25, 0.25)), shadow_pass ? this.shapes.Flower_Stem.material : this.pure);
-		//this.shapes.Flower_Core.model.draw(context, program_state, Mat4.translation(0, 7, 0).times(Mat4.scale(0.1, 0.1, -0.1)), shadow_pass ? this.shapes.Flower_Core.material : this.pure);
-		//this.shapes.Flower_Petal.model.draw(context, program_state, Mat4.translation(0, 5.35, 0).times(Mat4.scale(0.15, 0.15, 0.15)), shadow_pass ? this.shapes.Flower_Petal.material : this.pure);
+		//this.shapes.Flower_Core.model.draw(context, program_state, Mat4.translation(0, 5.35, 0).times(Mat4.scale(0.1, 0.1, 0.05)).times(Mat4.rotation(Math.PI,0, 0, 1)), shadow_pass ? this.shapes.Flower_Core.material : this.pure);
+		//this.shapes.Flower_Petal.model.draw(context, program_state, Mat4.translation(0, 5.35, 0).times(Mat4.scale(0.2, 0.15, 0.2)), shadow_pass ? this.shapes.Flower_Petal.material : this.pure);
+		//this.shapes.Flower_Petal.model.draw(context, program_state, Mat4.translation(0, 5.35, 0).times(Mat4.scale(0.2, 0.15, 0.2)).times(Mat4.rotation(Math.PI/5,0, 1, 0)), shadow_pass ? this.shapes.Flower_Petal.material : this.pure);
+		//this.shapes.correction.draw(context, program_state, Mat4.translation(0, 5.39, 0).times(Mat4.scale(0.1, 0.05, 0.1)), this.materials.correction);
 
 		// Place objects in scene
 		for (let i=0; i < xlen; i++) {
@@ -354,10 +364,10 @@ export class Sokoban extends Scene {
 				else if (gl[j] == 2 | gl[j] == 5) {
 					let material = this.materials.crate;
 					if (this.moving && player_pos[0]+this.move[0] == i && player_pos[1]+this.move[1] == j) {
-						let tm = Mat4.translation(2*i + 2*this.move[0]*Math.sin(this.angle), 0, 2*j + 2*this.move[1]*Math.sin(this.angle));
+						let tm = Mat4.translation(2*i + 2*this.move[0]*Math.sin(this.angle), -0.2, 2*j + 2*this.move[1]*Math.sin(this.angle));
 						this.shapes.crate.draw(context, program_state, tm, shadow_pass ? material : this.pure);
 					} else {
-						let tm = Mat4.translation(2*i, 0, 2*j);
+						let tm = Mat4.translation(2*i, -0.2, 2*j);
 						this.shapes.crate.draw(context, program_state, tm, shadow_pass ? material : this.pure);
 					}
 				}
@@ -408,8 +418,7 @@ export class Sokoban extends Scene {
 
 		if (this.pressed && this.flat)
 		{
-			//this.camera_save = program_state.camera_transform;
-			this.camera_save = this.matrix;
+			this.camera_save = program_state.camera_transform;
 			program_state.set_camera(Mat4.look_at(vec3(5, 40, 5), vec3(5, 0, 5), vec3(0, 0, -1)));
 			this.pressed = false;
 		}
@@ -472,13 +481,5 @@ export class Sokoban extends Scene {
 		program_state.view_mat = program_state.camera_inverse;
 		program_state.projection_transform = Mat4.perspective(Math.PI / 4, context.width / context.height, 1, 10000);
 		this.render_scene(context, program_state, true,true, true);
-
-		// Step 3: display the textures
-		this.shapes.square_2d.draw(context, program_state,
-			Mat4.translation(-.99, .08, 0).times(
-				Mat4.scale(0.5, 0.5 * gl.canvas.width / gl.canvas.height, 1)
-			),
-			this.depth_tex.override({texture: this.lightDepthTexture})
-		);
 	}
 }
