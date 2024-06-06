@@ -3,6 +3,7 @@ import {Tree_Trunks} from './objects/crate.js';
 import {Tree_Leaves} from './objects/crate.js';
 import {Round_Tree_Trunks} from './objects/crate.js';
 import {Round_Tree_Leaves} from './objects/crate.js';
+import {Flower_Stem} from './objects/crate.js';
 import {Game} from "./game_logic.js";
 
 // shadows
@@ -52,12 +53,13 @@ export class Sokoban extends Scene {
 			'player': new Cube(), //TODO
 			'tree': new Cube(), //TODO
 			'bush': new defs.Subdivision_Sphere(2),
-			'crate': new Cube(), //TODO
+			'crate': new (defs.Subdivision_Sphere.prototype.make_flat_shaded_version())(2), //TODO
 			'skybox': new defs.Subdivision_Sphere(4),
 			'Tree_Trunks': new Tree_Trunks(),
 			'Tree_Leaves': new Tree_Leaves(),
 			'Round_Tree_Trunks': new Round_Tree_Trunks(),
 			'Round_Tree_Leaves': new Round_Tree_Leaves(),
+			'Flower_Stem': new Flower_Stem(),
 			'square_2d': new Square(),
 		};
 
@@ -107,13 +109,19 @@ export class Sokoban extends Scene {
 					light_depth_texture: null}),
 
 			crate: new Material(new Shadow_Textured_Phong_Shader(1),
-				{ambient: .1, diffusivity: 1, 
+				{ambient: .1, diffusivity: 1, specularity: 0.1,
 					color: hex_color("#F5F5DC"),
 					color_texture: null,
 					light_depth_texture: null}),
 
 			skybox: new Material(new defs.Phong_Shader(),
 				{ambient: 1, diffusivity: 0, color: hex_color("#87CEEB")}),
+
+			trail: new Material(new Shadow_Textured_Phong_Shader(1),
+				{ambient: .1, diffusivity: 1,
+					color: hex_color("#800080"),
+					color_texture: new Texture("assets/Trail.png"),
+					light_depth_texture: null}),
 		};
 
 		this.initial_camera_location = Mat4.look_at(vec3(5, 10, 30), vec3(5, 0, 0), vec3(0, 1, 0));
@@ -164,6 +172,9 @@ export class Sokoban extends Scene {
 		this.shapes.Tree_Leaves.material.light_depth_texture = this.light_depth_texture;
 		this.shapes.Round_Tree_Trunks.material.light_depth_texture = this.light_depth_texture;
 		this.shapes.Round_Tree_Leaves.material.light_depth_texture = this.light_depth_texture;
+		this.shapes.Flower_Stem.material.light_depth_texture = this.light_depth_texture;
+		this.materials.trail.light_depth_texture = this.light_depth_texture;
+
 
 		this.lightDepthTextureSize = LIGHT_DEPTH_TEX_SIZE;
 		gl.bindTexture(gl.TEXTURE_2D, this.lightDepthTexture);
@@ -257,6 +268,7 @@ export class Sokoban extends Scene {
 			}
 		}
 
+		//this.shapes.Flower_Stem.model.draw(context, program_state, Mat4.translation(0, 10, 0).times(Mat4.scale(0.25, 0.25, 0.25)), shadow_pass ? this.shapes.Flower_Stem.material : this.pure);
 
 		// Place objects in scene
 		for (let i=0; i < xlen; i++) {
@@ -264,7 +276,7 @@ export class Sokoban extends Scene {
 			for (let j=0; j < zlen; j++) {
 
 				if (gl[j] != 1) {
-					this.shapes.player.draw(context, program_state, Mat4.identity().times(Mat4.translation(2 * i, -1.5, 2 * j)).times(Mat4.scale(1, .5, 1)), this.materials.tree.override({color: hex_color("#D2B48C")}));
+					this.shapes.player.draw(context, program_state, Mat4.identity().times(Mat4.translation(2 * i, -1.5, 2 * j)).times(Mat4.scale(1, .5, 1)), this.materials.trail.override({color: hex_color("#D2B48C")}));
 				} else {
 					this.shapes.player.draw(context, program_state, Mat4.identity().times(Mat4.translation(2 * i, -1.5, 2 * j)).times(Mat4.scale(1, .5, 1)), this.materials.tree.override({color: hex_color("#41980a")}));
 				}
@@ -323,8 +335,8 @@ export class Sokoban extends Scene {
 					this.shapes.player.draw(context, program_state, Mat4.translation(2*i,-1.4,2*j).times(Mat4.scale(1,.5,1)), shadow_pass ? this.materials.crate.override({color: hex_color("FF817E")}) : this.pure);
 				}
 			}
-			this.tree_counter = 0;
 		}
+		this.tree_counter = 0;
 	}
 
 	display(context, program_state) {
