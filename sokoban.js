@@ -166,7 +166,7 @@ export class Sokoban extends Scene {
 		})
 		this.key_triggered_button("AI Solve", ["p"], () => {
 			this.movement_enabled = false;
-			this.solution = [[1,0], [1,0], [1,0], [0,-1], [1,0], [0,1], [0,1]];
+			this.solution = this.game.ai_sol();
 		});
 	}
 
@@ -174,7 +174,7 @@ export class Sokoban extends Scene {
 		// prohibit moving while other move animating
 		if (!this.moving)
 			// test if move is legal
-			if (this.game.move(move, true) > 0) {
+			if (this.game.move(move, true, this.game.game) > 0) {
 				this.angle = 0;
 				this.move = move;
 				this.moving = true;
@@ -184,7 +184,7 @@ export class Sokoban extends Scene {
 	end_move(move) {
 		this.moving = false;
 		// actually make move
-		this.game.move(move, false);
+		this.game.move(move, false, this.game.game);
 	}
 
 	ai_mover(){
@@ -302,10 +302,10 @@ export class Sokoban extends Scene {
 		//let gt = Mat4.translation(-3, -2, -3).times(Mat4.scale(xlen+2, .5, zlen+2).times(Mat4.translation(1, 1, 1)));
 		//this.shapes.player.draw(context, program_state, gt, shadow_pass ? this.materials.tree.override({color: hex_color("#D2B48C")}) : this.pure);
 
-		let player_pos = this.game.get_keeper_pos();
+		let player_pos = this.game.get_keeper_pos(this.game.game);
 
 		// Check if solved before animating to have red block at end of solution
-		if (this.game.is_solved())
+		if (this.game.is_solved(this.game.game))
 			this.solved = true;
 
 		for (let i = 0; i < xlen+2; i++) {
@@ -325,7 +325,7 @@ export class Sokoban extends Scene {
 			let gl = this.game.game[i];
 			for (let j=0; j < zlen; j++) {
 
-				if (gl[j] != 1) {
+				if (gl[j] != 1 && gl[j] != 7) {
 					this.shapes.player.draw(context, program_state, Mat4.identity().times(Mat4.translation(2 * i, -1.5, 2 * j)).times(Mat4.scale(1, .5, 1)), this.materials.trail.override({color: hex_color("#D2B48C")}));
 				} else {
 					this.shapes.player.draw(context, program_state, Mat4.identity().times(Mat4.translation(2 * i, -1.5, 2 * j)).times(Mat4.scale(1, .5, 1)), this.materials.tree.override({color: hex_color("#41980a")}));
@@ -334,27 +334,25 @@ export class Sokoban extends Scene {
 				// wall
 				if (gl[j] == 1) {
 					if(this.trees[this.tree_counter] ==  0) {
-                        this.shapes.Tree_Trunks.model.draw(context, program_state, Mat4.translation(2*i, 0, 2*j).times(Mat4.scale(0.75, 1.25, 0.75)), shadow_pass ? this.shapes.Tree_Trunks.material : this.pure);
-                        this.shapes.Tree_Leaves.model.draw(context, program_state, Mat4.translation(2*i, 2, 2*j).times(Mat4.scale(1, 1.25, 1)), shadow_pass ? this.shapes.Tree_Leaves.material : this.pure);
-                    }
-					
+						this.shapes.Tree_Trunks.model.draw(context, program_state, Mat4.translation(2*i, 0, 2*j).times(Mat4.scale(0.75, 1.25, 0.75)), shadow_pass ? this.shapes.Tree_Trunks.material : this.pure);
+						this.shapes.Tree_Leaves.model.draw(context, program_state, Mat4.translation(2*i, 2, 2*j).times(Mat4.scale(1, 1.25, 1)), shadow_pass ? this.shapes.Tree_Leaves.material : this.pure);
+					}
+
 					// temporarily remove big trees
 					else if(this.trees[this.tree_counter] == 1) {
-                        this.shapes.Round_Tree_Trunks.model.draw(context, program_state, Mat4.translation(2*i, 1.3, 2*j), shadow_pass ? this.shapes.Round_Tree_Trunks.material : this.pure);
-                        this.shapes.Round_Tree_Leaves.model.draw(context, program_state, Mat4.translation(2*i, 2.3, 2*j).times(Mat4.scale(1.35, 1.35, 1.35)), shadow_pass ? this.shapes.Round_Tree_Leaves.material : this.pure);
-                    }
+						this.shapes.Round_Tree_Trunks.model.draw(context, program_state, Mat4.translation(2*i, 1.3, 2*j), shadow_pass ? this.shapes.Round_Tree_Trunks.material : this.pure);
+						this.shapes.Round_Tree_Leaves.model.draw(context, program_state, Mat4.translation(2*i, 2.3, 2*j).times(Mat4.scale(1.35, 1.35, 1.35)), shadow_pass ? this.shapes.Round_Tree_Leaves.material : this.pure);
+					}
 
 					else {
-                        this.shapes.bush.draw(context, program_state, Mat4.translation(2*i, -0.25, 2*j), shadow_pass ? this.materials.bush : this.pure);
-                    }
+						this.shapes.bush.draw(context, program_state, Mat4.translation(2*i, -0.25, 2*j), shadow_pass ? this.materials.bush : this.pure);
+					}
 
-                    this.tree_counter++;
+					this.tree_counter++;
 				}
 				// crate
 				else if (gl[j] == 2 | gl[j] == 5) {
 					let material = this.materials.crate;
-					if (gl[j] == 5)
-						material = this.materials.crate.override({color: hex_color("#FF817E")});
 					if (this.moving && player_pos[0]+this.move[0] == i && player_pos[1]+this.move[1] == j) {
 						let tm = Mat4.translation(2*i + 2*this.move[0]*Math.sin(this.angle), 0, 2*j + 2*this.move[1]*Math.sin(this.angle));
 						this.shapes.crate.draw(context, program_state, tm, shadow_pass ? material : this.pure);
@@ -439,7 +437,7 @@ export class Sokoban extends Scene {
 		// *** Lights: *** Values of vector or point lights.
 		//let light_position = vec4(Math.floor((this.game.levels[this.game.index].length + 2)/2),100, Math.floor((this.game.levels[this.game.index][0].length + 2)/2), 1);
 		//program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 10000)];
-		
+
 		this.light_position = vec4(0, 15, 10, 1);
 		this.light_color = color(1, 1, 1, 1);
 		program_state.lights = [new Light(this.light_position, this.light_color, 10000)];
