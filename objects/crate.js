@@ -53,3 +53,14 @@ export class Round_Tree_Leaves {
 	}
 }
 
+export class Rock {
+	constructor() {
+		this.model = new Shape_From_File('assets/rock1.obj');
+		this.material = new Material(new Shadow_Textured_Phong_Shader(1),
+			{ambient: .1, diffusivity: 1, specularity: 0.1,
+				color: hex_color('#efefc8'),
+				color_texture: null,
+				light_depth_texture: null});
+	}
+}
+

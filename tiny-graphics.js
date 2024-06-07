@@ -593,6 +593,13 @@ const Mat4 = tiny.Mat4 =
                 [0, 0, 0, 1]);
         }
 
+        static shear(sx, sy) {
+            return Matrix.of([1, 0, sx, 0],
+                [0, 1, sy, 0],
+                [0, 0, 1, 0],
+                [0, 0, 0, 1]);
+        }
+
         static look_at(eye, at, up) {
             // look_at():  Produce a traditional graphics camera "lookat" matrix.
             // Each input must be a 3x1 Vector.
