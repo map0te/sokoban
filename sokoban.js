@@ -108,7 +108,7 @@ export class Sokoban extends Scene {
 					light_depth_texture: null}),
 
 			tree: new Material(new Shadow_Textured_Phong_Shader(1),
-				{ambient: .1, diffusivity: 1, 
+				{ambient: .1, diffusivity: 1, specularity: 0, 
 					color: hex_color("#00FF00"),
 					color_texture: null,
 					light_depth_texture: null}),
@@ -126,7 +126,7 @@ export class Sokoban extends Scene {
 				{ambient: .1, diffusivity: 1, specularity: 0.1, color: hex_color("#964B00")}),
 
 			trail: new Material(new Shadow_Textured_Phong_Shader(1),
-				{ambient: .1, diffusivity: 1,
+				{ambient: .1, diffusivity: 1, specularity: 0,
 					color_texture: null,
 					light_depth_texture: null}),
 		};
