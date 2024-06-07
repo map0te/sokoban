@@ -166,7 +166,11 @@ export class Sokoban extends Scene {
 			this.movement_enabled = true;
 			this.game.reset_level();
 		});
-		this.key_triggered_button("Next Level", ["n"], () => this.game.next_level());
+		this.key_triggered_button("Next Level", ["n"], () => {
+			this.game.next_level();
+			this.tree_counter = 0;
+            this.trees = Array.from({length: 100}, () => Math.floor(Math.random() * 5));
+		});
 		this.key_triggered_button("Prev Level", ["Shift", "N"], () => this.game.prev_level());
 		this.key_triggered_button("Toggle View", ["c"], () => {
 			this.pressed = !this.pressed;
