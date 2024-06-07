@@ -53,36 +53,3 @@ export class Round_Tree_Leaves {
 	}
 }
 
-export class Flower_Stem {
-	constructor() {
-		this.model = new Shape_From_File('assets/flower_stem.obj');
-		this.material = new Material(new Shadow_Textured_Phong_Shader(1),
-			{ambient: .1, diffusivity: 1, specularity: 0.1,
-				color: hex_color('#037d50'),
-				color_texture: null,
-				light_depth_texture: null});
-	}
-}
-
-export class Flower_Core {
-	constructor() {
-		this.model = new Shape_From_File('assets/flower_core.obj');
-		this.material = new Material(new Shadow_Textured_Phong_Shader(1),
-			{ambient: .1, diffusivity: 1, specularity: 0.1,
-				color: hex_color('#FFFF00'),
-				color_texture: null,
-				light_depth_texture: null});
-	}
-}
-
-export class Flower_Petal {
-	constructor() {
-		this.model = new Shape_From_File('assets/flower_petal.obj');
-		this.material = new Material(new Shadow_Textured_Phong_Shader(1),
-			{ambient: .1, diffusivity: 1, specularity: 0.1,
-				color: hex_color('#FFFFFF'),
-				color_texture: null,
-				light_depth_texture: null});
-	}
-}
-

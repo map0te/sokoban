@@ -3,9 +3,6 @@ import {Tree_Trunks} from './objects/crate.js';
 import {Tree_Leaves} from './objects/crate.js';
 import {Round_Tree_Trunks} from './objects/crate.js';
 import {Round_Tree_Leaves} from './objects/crate.js';
-import {Flower_Stem} from './objects/crate.js';
-import {Flower_Core} from './objects/crate.js';
-import {Flower_Petal} from './objects/crate.js';
 import {Game} from "./game_logic.js";
 
 // shadows
@@ -65,9 +62,6 @@ export class Sokoban extends Scene {
 			'Tree_Leaves': new Tree_Leaves(),
 			'Round_Tree_Trunks': new Round_Tree_Trunks(),
 			'Round_Tree_Leaves': new Round_Tree_Leaves(),
-			'Flower_Stem': new Flower_Stem(),
-			'Flower_Core': new Flower_Core(),
-			'Flower_Petal': new Flower_Petal(),
 			'square_2d': new Square(),
 		};
 
@@ -130,7 +124,6 @@ export class Sokoban extends Scene {
 
 			trail: new Material(new Shadow_Textured_Phong_Shader(1),
 				{ambient: .1, diffusivity: 1,
-					color: hex_color("#800080"),
 					color_texture: new Texture("assets/Trail.png"),
 					light_depth_texture: null}),
 		};
@@ -225,9 +218,6 @@ export class Sokoban extends Scene {
 		this.shapes.Tree_Leaves.material.light_depth_texture = this.light_depth_texture;
 		this.shapes.Round_Tree_Trunks.material.light_depth_texture = this.light_depth_texture;
 		this.shapes.Round_Tree_Leaves.material.light_depth_texture = this.light_depth_texture;
-		this.shapes.Flower_Stem.material.light_depth_texture = this.light_depth_texture;
-		this.shapes.Flower_Core.material.light_depth_texture = this.light_depth_texture;
-		this.shapes.Flower_Petal.material.light_depth_texture = this.light_depth_texture;
 		this.materials.trail.light_depth_texture = this.light_depth_texture;
 
 
@@ -328,11 +318,12 @@ export class Sokoban extends Scene {
 			}
 		}
 
-		//this.shapes.Flower_Stem.model.draw(context, program_state, Mat4.translation(0, 5, 0).times(Mat4.scale(0.25, 0.25, 0.25)), shadow_pass ? this.shapes.Flower_Stem.material : this.pure);
-		//this.shapes.Flower_Core.model.draw(context, program_state, Mat4.translation(0, 5.35, 0).times(Mat4.scale(0.1, 0.1, 0.05)).times(Mat4.rotation(Math.PI,0, 0, 1)), shadow_pass ? this.shapes.Flower_Core.material : this.pure);
-		//this.shapes.Flower_Petal.model.draw(context, program_state, Mat4.translation(0, 5.35, 0).times(Mat4.scale(0.2, 0.15, 0.2)), shadow_pass ? this.shapes.Flower_Petal.material : this.pure);
-		//this.shapes.Flower_Petal.model.draw(context, program_state, Mat4.translation(0, 5.35, 0).times(Mat4.scale(0.2, 0.15, 0.2)).times(Mat4.rotation(Math.PI/5,0, 1, 0)), shadow_pass ? this.shapes.Flower_Petal.material : this.pure);
-		//this.shapes.correction.draw(context, program_state, Mat4.translation(0, 5.39, 0).times(Mat4.scale(0.1, 0.05, 0.1)), this.materials.correction);
+		for (let i = 0; i < xlen+2; i++) {
+			for (let j = 0; j < zlen+2; j++) {
+				this.shapes.player.draw(context, program_state, Mat4.identity().times(Mat4.translation(2*i-2, -2.5, 2*j-2)).times(Mat4.scale(1, .5, 1)), this.materials.tree.override({color: hex_color("#41980a")}));
+			}
+		}
+
 
 		// Place objects in scene
 		for (let i=0; i < xlen; i++) {
