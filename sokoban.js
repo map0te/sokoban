@@ -316,7 +316,7 @@ export class Sokoban extends Scene {
 
 		for (let i = 0; i < xlen+2; i++) {
 			for (let j = 0; j < zlen+2; j++) {
-				if (i == 0 || i == xlen + 1 || j == 0 || j == zlen + 1) {
+				if (i == 0 || i == xlen + 1 || j == 0 || j == zlen + 1 || (i < xlen+1 && i > 0  && j < zlen+1 && j > 0 && this.game.game[i-1][j-1] == 7)) {
 					this.shapes.player.draw(context, program_state, Mat4.identity().times(Mat4.translation(2*i-2, -1.5, 2*j-2)).times(Mat4.scale(1, .5, 1)), this.materials.tree.override({color: hex_color("#41980a")}));
 
 					if (this.trees[this.tree_counter] == 0) {
@@ -390,56 +390,6 @@ export class Sokoban extends Scene {
 					this.shapes.player.draw(context, program_state, Mat4.identity().times(Mat4.translation(2 * i, -1.5, 2 * j)).times(Mat4.scale(1, .5, 1)), this.materials.trail.override({color: hex_color("#D2B48C")}));
 				} else {
 					this.shapes.player.draw(context, program_state, Mat4.identity().times(Mat4.translation(2 * i, -1.5, 2 * j)).times(Mat4.scale(1, .5, 1)), this.materials.tree.override({color: hex_color("#41980a")}));
-				}
-
-				if (gl[j] == 7) {
-					if (this.trees[this.tree_counter] == 0) {
-						this.shapes.grass.draw(context, program_state, Mat4.translation(2*i-2, -1, 2*j-2.25).times(Mat4.scale(0.25, 0.5, 0.25)), this.materials.tree.override({color: hex_color("#3f9b0b")}));
-						this.shapes.grass.draw(context, program_state, Mat4.translation(2*i-2, -1, 2*j - 1.25).times(Mat4.scale(0.25, 0.5, 0.25)).times(Mat4.rotation(Math.PI/2, 0, 1, 0)), this.materials.tree.override({color: hex_color("#3f9b0b")}));
-						this.shapes.grass.draw(context, program_state, Mat4.translation(2*i - 1.5, -1, 2*j - 1.75).times(Mat4.scale(0.25, 0.5, 0.25)).times(Mat4.rotation(Math.PI, 0, 1, 0)), this.materials.tree.override({color: hex_color("#3f9b0b")}));
-						this.shapes.grass.draw(context, program_state, Mat4.translation(2*i- 2.75, -1, 2*j-2).times(Mat4.scale(0.25, 0.5, 0.25)).times(Mat4.rotation(Math.PI/4, 0, 1, 0)), this.materials.tree.override({color: hex_color("#3f9b0b")}));
-						this.shapes.grass.draw(context, program_state, Mat4.translation(2*i- 2.25, -1, 2*j - 1).times(Mat4.scale(0.25, 0.5, 0.25)).times(Mat4.rotation(3*Math.PI/4, 0, 1, 0)), this.materials.tree.override({color: hex_color("#3f9b0b")}));
-						this.shapes.grass.draw(context, program_state, Mat4.translation(2*i - 2.75, -1, 2*j - 1.5).times(Mat4.scale(0.25, 0.5, 0.25)).times(Mat4.rotation(5*Math.PI/4, 0, 1, 0)), this.materials.tree.override({color: hex_color("#3f9b0b")}));
-						this.shapes.grass.draw(context, program_state, Mat4.translation(2*i-1.25, -1, 2*j-2.5).times(Mat4.scale(0.25, 0.5, 0.25)).times(Mat4.rotation(Math.PI/2, 0, 1, 0)), this.materials.tree.override({color: hex_color("#3f9b0b")}));
-						this.shapes.grass.draw(context, program_state, Mat4.translation(2*i-1.75, -1, 2*j - 1.5).times(Mat4.scale(0.25, 0.5, 0.25)).times(Mat4.rotation(Math.PI, 0, 1, 0)), this.materials.tree.override({color: hex_color("#3f9b0b")}));
-						this.shapes.grass.draw(context, program_state, Mat4.translation(2*i - 1.75, -1, 2*j - 2).times(Mat4.scale(0.25, 0.5, 0.25)).times(Mat4.rotation(3*Math.PI/2, 0, 1, 0)), this.materials.tree.override({color: hex_color("#3f9b0b")}));
-
-						if (this.trees[this.tree_counter+1] == 2){
-							this.shapes.Rock.model.draw(context, program_state, Mat4.translation(2*i - 1.45, -1, 2*j - 1.35).times(Mat4.scale(0.25, 0.25, 0.25)).times(Mat4.rotation(Math.PI/2, 0, 1, 0)), shadow_pass ? this.shapes.Rock.material : this.pure);
-						}
-					}
-
-					else if (this.trees[this.tree_counter] == 1) {
-						this.shapes.grass.draw(context, program_state, Mat4.translation(2*i-2, -1, 2*j-2.25).times(Mat4.scale(0.25, 0.5, 0.25)).times(Mat4.rotation(Math.PI/4, 0, 1, 0)), this.materials.tree.override({color: hex_color("#3f9b0b")}));
-						this.shapes.grass.draw(context, program_state, Mat4.translation(2*i-2, -1, 2*j - 1.25).times(Mat4.scale(0.25, 0.5, 0.25)).times(Mat4.rotation(3*Math.PI/4, 0, 1, 0)), this.materials.tree.override({color: hex_color("#3f9b0b")}));
-						this.shapes.grass.draw(context, program_state, Mat4.translation(2*i - 1.5, -1, 2*j - 1.75).times(Mat4.scale(0.25, 0.5, 0.25)).times(Mat4.rotation(5*Math.PI/4, 0, 1, 0)), this.materials.tree.override({color: hex_color("#3f9b0b")}));
-						this.shapes.grass.draw(context, program_state, Mat4.translation(2*i- 2.75, -1, 2*j-2).times(Mat4.scale(0.25, 0.5, 0.25)).times(Mat4.rotation(Math.PI/2, 0, 1, 0)), this.materials.tree.override({color: hex_color("#3f9b0b")}));
-						this.shapes.grass.draw(context, program_state, Mat4.translation(2*i- 2.25, -1, 2*j - 1).times(Mat4.scale(0.25, 0.5, 0.25)).times(Mat4.rotation(Math.PI, 0, 1, 0)), this.materials.tree.override({color: hex_color("#3f9b0b")}));
-						this.shapes.grass.draw(context, program_state, Mat4.translation(2*i - 2.75, -1, 2*j - 1.5).times(Mat4.scale(0.25, 0.5, 0.25)).times(Mat4.rotation(3*Math.PI/2, 0, 1, 0)), this.materials.tree.override({color: hex_color("#3f9b0b")}));
-						this.shapes.grass.draw(context, program_state, Mat4.translation(2*i-1.25, -1, 2*j-2.5).times(Mat4.scale(0.25, 0.5, 0.25)), this.materials.tree.override({color: hex_color("#3f9b0b")}));
-						this.shapes.grass.draw(context, program_state, Mat4.translation(2*i-1.75, -1, 2*j - 1.5).times(Mat4.scale(0.25, 0.5, 0.25)).times(Mat4.rotation(Math.PI/2, 0, 1, 0)), this.materials.tree.override({color: hex_color("#3f9b0b")}));
-						this.shapes.grass.draw(context, program_state, Mat4.translation(2*i - 1.75, -1, 2*j - 2).times(Mat4.scale(0.25, 0.5, 0.25)).times(Mat4.rotation(Math.PI, 0, 1, 0)), this.materials.tree.override({color: hex_color("#3f9b0b")}));
-
-						if (this.trees[this.tree_counter+1] == 2){
-							this.shapes.Rock.model.draw(context, program_state, Mat4.translation(2*i - 1.45, -1, 2*j - 1.35).times(Mat4.scale(0.25, 0.25, 0.25)).times(Mat4.rotation(3*Math.PI/2, 0, 1, 0)), shadow_pass ? this.shapes.Rock.material : this.pure);
-						}
-					}
-
-					else if (this.trees[this.tree_counter] == 2) {
-						this.shapes.grass.draw(context, program_state, Mat4.translation(2*i-2, -1, 2*j-2.25).times(Mat4.scale(0.25, 0.5, 0.25)).times(Mat4.rotation(Math.PI/2, 0, 1, 0)), this.materials.tree.override({color: hex_color("#3f9b0b")}));
-						this.shapes.grass.draw(context, program_state, Mat4.translation(2*i-2, -1, 2*j - 1.25).times(Mat4.scale(0.25, 0.5, 0.25)).times(Mat4.rotation(Math.PI, 0, 1, 0)), this.materials.tree.override({color: hex_color("#3f9b0b")}));
-						this.shapes.grass.draw(context, program_state, Mat4.translation(2*i - 1.5, -1, 2*j - 1.75).times(Mat4.scale(0.25, 0.5, 0.25)).times(Mat4.rotation(3*Math.PI/2, 0, 1, 0)), this.materials.tree.override({color: hex_color("#3f9b0b")}));
-						this.shapes.grass.draw(context, program_state, Mat4.translation(2*i- 2.75, -1, 2*j-2).times(Mat4.scale(0.25, 0.5, 0.25)), this.materials.tree.override({color: hex_color("#3f9b0b")}));
-						this.shapes.grass.draw(context, program_state, Mat4.translation(2*i- 2.25, -1, 2*j - 1).times(Mat4.scale(0.25, 0.5, 0.25)).times(Mat4.rotation(Math.PI/2, 0, 1, 0)), this.materials.tree.override({color: hex_color("#3f9b0b")}));
-						this.shapes.grass.draw(context, program_state, Mat4.translation(2*i - 2.75, -1, 2*j - 1.5).times(Mat4.scale(0.25, 0.5, 0.25)).times(Mat4.rotation(Math.PI, 0, 1, 0)), this.materials.tree.override({color: hex_color("#3f9b0b")}));
-						this.shapes.grass.draw(context, program_state, Mat4.translation(2*i-1.25, -1, 2*j-2.5).times(Mat4.scale(0.25, 0.5, 0.25)).times(Mat4.rotation(Math.PI/4, 0, 1, 0)), this.materials.tree.override({color: hex_color("#3f9b0b")}));
-						this.shapes.grass.draw(context, program_state, Mat4.translation(2*i-1.75, -1, 2*j - 1.5).times(Mat4.scale(0.25, 0.5, 0.25)).times(Mat4.rotation(3*Math.PI/4, 0, 1, 0)), this.materials.tree.override({color: hex_color("#3f9b0b")}));
-						this.shapes.grass.draw(context, program_state, Mat4.translation(2*i - 1.75, -1, 2*j - 2).times(Mat4.scale(0.25, 0.5, 0.25)).times(Mat4.rotation(5*Math.PI/4, 0, 1, 0)), this.materials.tree.override({color: hex_color("#3f9b0b")}));
-
-						if (this.trees[this.tree_counter+1] == 2){
-							this.shapes.Rock.model.draw(context, program_state, Mat4.translation(2*i - 1.45, -1, 2*j - 1.35).times(Mat4.scale(0.25, 0.25, 0.25)).times(Mat4.rotation(3*Math.PI/2, 0, 1, 0)), shadow_pass ? this.shapes.Rock.material : this.pure);
-						}
-					}
 				}
 
 				// wall
