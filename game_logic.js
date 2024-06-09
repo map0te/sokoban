@@ -340,7 +340,7 @@ export class Game {
 			if (this.is_solved(node.state1))
 				return node;
 			let old_cost = explored.get(node.state);
-			if (old_cost != null && old_cst <= node.cost) 
+			if (old_cost != null && old_cost <= node.cost) 
 				continue;
 			explored.set(node.state, node.cost);
 			let ns = this.next_moves(node.state1);
